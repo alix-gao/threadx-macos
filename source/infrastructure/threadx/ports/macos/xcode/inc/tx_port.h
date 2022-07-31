@@ -559,16 +559,10 @@ void    _tx_linux_thread_init();
 #define info(fmt, arg...) \
     do { \
         uint64_t _tid; \
-        static pthread_mutex_t _tx_print_mutex; \
-        static int _print_mutex = 1; \
-        if (_print_mutex) { \
-            _print_mutex = 0; \
-            pthread_mutex_init(&_tx_print_mutex, NULL); \
-        } \
+        pthread_mutex_lock(&_tx_linux_mutex); \
         pthread_threadid_np(NULL, &_tid); \
-        pthread_mutex_lock(&_tx_print_mutex); \
         printf("id 0x%llx: ", _tid); printf(fmt"\n", ##arg); \
-        pthread_mutex_unlock(&_tx_print_mutex); \
+        pthread_mutex_unlock(&_tx_linux_mutex); \
     } while (0)
 #else
 #define info(fmt, arg...) do { } while (0)

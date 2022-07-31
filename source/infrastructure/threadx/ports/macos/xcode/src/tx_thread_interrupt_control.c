@@ -112,6 +112,7 @@ int         exit_code = 0;
     if ((_tx_linux_threadx_thread) &&
         ((!thread_ptr) || (!pthread_equal(thread_ptr -> tx_thread_linux_thread_id, thread_id))))
     {
+        printf("pthread exit %p\n", thread_ptr);
         dump_callstack();
         /* This indicates the Linux thread was actually terminated by ThreadX is only
            being allowed to run in order to cleanup its resources.  */

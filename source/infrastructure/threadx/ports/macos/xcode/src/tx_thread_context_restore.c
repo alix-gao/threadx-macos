@@ -108,26 +108,13 @@ VOID   _tx_thread_context_restore(VOID)
 
             /* Clear the current task pointer.  */
             _tx_thread_current_ptr =  TX_NULL;
+printf("restore\n");
 
-            /* Return to the scheduler.  */
-            _tx_thread_schedule();
         }
     }
 
      /* Just return back to the scheduler!  */
 
-#if 0
-    _tx_thread_system_state--;
-info("restore %d %x", _tx_thread_system_state, _tx_thread_current_ptr);
-    /* Determine if this is the first nested interrupt and if a ThreadX
-       application thread was running at the time.  */
-    if ((!_tx_thread_system_state) && (_tx_thread_current_ptr))
-    {
-info("-------------restore %s\n", _tx_thread_current_ptr->tx_thread_name);
-tx_linux_sem_post_nolock(_tx_thread_current_ptr -> tx_thread_linux_thread_run_semaphore);
-        _tx_linux_thread_resume(_tx_thread_current_ptr);
-    }
-#endif
     /* Unlock linux mutex. */
     tx_linux_mutex_recursive_unlock(_tx_linux_mutex);
 }

@@ -316,8 +316,8 @@ void    _tx_linux_thread_suspend(TX_THREAD *thread)
     }
 info("suspend %d %lx", pthread_equal(thread_id, _tx_linux_timer_id), thread_id);
 thread->tx_macos_thread_suspend = 1;
-    /* Send signal. */
-    //tx_linux_mutex_lock(_tx_linux_mutex);info("suspend kill");
+    /* Send signal. */info("suspend kill");
+    //tx_linux_mutex_lock(_tx_linux_mutex);
     pthread_kill(thread_id, SUSPEND_SIG);info("suspend killed");
     //tx_linux_mutex_unlock(_tx_linux_mutex);
 

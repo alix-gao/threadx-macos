@@ -102,51 +102,24 @@ info("_tx_thread_schedule\n");
         } while (!_tx_thread_execute_ptr);
         info("sche");
 
-
-        #if 0
-        /* Wait for a thread to execute and all ISRs to complete.  */
-        while(1)
-        {
-
-            /* Lock Linux mutex.  */
-            tx_linux_mutex_lock(_tx_linux_mutex);
-
-            /* Determine if there is a thread ready to execute AND all ISRs
-               are complete.  */
-            if (_tx_thread_execute_ptr != TX_NULL)
-            {
-
-                /* Get out of this loop and schedule the thread!  */
-                break;
-            }
-            else
-            {
-
-                /* Unlock linux mutex. */
-                tx_linux_mutex_unlock(_tx_linux_mutex);
-
-                /* Don't waste all the processor time here in the master thread...  */
-                nanosleep(&ts, &ts);
-            }
-        }
-        #endif
         tx_linux_mutex_lock(_tx_linux_mutex);
 
+        back = 0;
         if (_tx_thread_execute_ptr) {
 
-        /* Yes! We have a thread to execute. Note that the critical section is already
-           active from the scheduling loop above.  */
+            /* Yes! We have a thread to execute. Note that the critical section is already
+            active from the scheduling loop above.  */
 
-        /* Setup the current thread pointer.  */
-        _tx_thread_current_ptr =  _tx_thread_execute_ptr;
-info("_tx_thread_schedule :::::::::::::::::::::::: %s\n", _tx_thread_current_ptr->tx_thread_name);
-        /* Increment the run count for this thread.  */
-        _tx_thread_current_ptr -> tx_thread_run_count++;
+            /* Setup the current thread pointer.  */
+            _tx_thread_current_ptr =  _tx_thread_execute_ptr;
+    info("_tx_thread_schedule :::::::::::::::::::::::: %s\n", _tx_thread_current_ptr->tx_thread_name);
+            /* Increment the run count for this thread.  */
+            _tx_thread_current_ptr -> tx_thread_run_count++;
 
-        /* Setup time-slice, if present.  */
-        _tx_timer_time_slice =  _tx_thread_current_ptr -> tx_thread_time_slice;
+            /* Setup time-slice, if present.  */
+            _tx_timer_time_slice =  _tx_thread_current_ptr -> tx_thread_time_slice;
 
-        back = pthread_equal(_tx_thread_current_ptr->tx_thread_linux_thread_id,pthread_self());
+            back = pthread_equal(_tx_thread_current_ptr->tx_thread_linux_thread_id, pthread_self());
         }
         /* Unlock linux mutex. */
         tx_linux_mutex_unlock(_tx_linux_mutex);
@@ -159,12 +132,12 @@ info("_tx_thread_schedule :::::::::::::::::::::::: %s\n", _tx_thread_current_ptr
         }
 #endif
         if (pthread_main_np()) {
-            info("main thread idle");
+            info("dio world");
             sleep(-1);
         }
 
-info("_tx_thread_schedule s4\n");
-break;
+        info("_tx_thread_schedule s4\n");
+        break;
 
     }
 }
