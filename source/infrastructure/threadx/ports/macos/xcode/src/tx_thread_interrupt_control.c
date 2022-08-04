@@ -99,7 +99,7 @@ int         exit_code = 0;
 
 
     /* Lock Linux mutex. */
-    tx_linux_mutex_lock(_tx_linux_mutex);
+    tx_linux_mutex_lock(_tx_macos_mutex);
 
     /* Pickup the id of the current thread.  */
     thread_id = pthread_self();
@@ -117,7 +117,8 @@ int         exit_code = 0;
         /* This indicates the Linux thread was actually terminated by ThreadX is only
            being allowed to run in order to cleanup its resources.  */
         /* Unlock linux mutex. */
-        tx_linux_mutex_recursive_unlock(_tx_linux_mutex);
+        tx_linux_mutex_recursive_unlock(_tx_macos_mutex);
+while (1) info(".");
         pthread_exit((void *)&exit_code);
     }
 
@@ -148,7 +149,7 @@ int         exit_code = 0;
             _tx_linux_global_int_disabled_flag =  TX_FALSE;
 
             /* Determine if the critical section is locked.  */
-            tx_linux_mutex_recursive_unlock(_tx_linux_mutex);
+            tx_linux_mutex_recursive_unlock(_tx_macos_mutex);
         }
         else if (new_posture == TX_INT_DISABLE)
         {
@@ -170,7 +171,7 @@ int         exit_code = 0;
             _tx_thread_current_ptr -> tx_thread_linux_int_disabled_flag =  TX_FALSE;
 
             /* Determine if the critical section is locked.  */
-            tx_linux_mutex_recursive_unlock(_tx_linux_mutex);
+            tx_linux_mutex_recursive_unlock(_tx_macos_mutex);
         }
         else if (new_posture == TX_INT_DISABLE)
         {

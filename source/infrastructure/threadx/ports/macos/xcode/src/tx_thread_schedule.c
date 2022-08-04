@@ -1,6 +1,6 @@
 /**************************************************************************/
 /*                                                                        */
-/*       Copyright (c) Microsoft Corporation. All rights reserved.        */
+/*       Copyright (c) thoughtworks Corporation. All rights reserved.     */
 /*                                                                        */
 /*       This software is licensed under the Microsoft Software License   */
 /*       Terms for Microsoft Azure RTOS. Full text of the license can be  */
@@ -25,21 +25,16 @@
 
 
 /* Include necessary system files.  */
-
-#include "tx_api.h"
-#include "tx_thread.h"
-#include "tx_timer.h"
 #include <stdio.h>
 #include <errno.h>
 #include <pthread.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-extern pthread_cond_t _tx_linux_timer_cond;
-extern pthread_mutex_t _tx_linux_timer_mutex;
-extern sem_t *_tx_linux_isr_semaphore;
-extern UINT _tx_linux_timer_waiting;
-extern pthread_t _tx_linux_timer_id;
+#include "tx_api.h"
+#include "tx_thread.h"
+#include "tx_timer.h"
+
 /**************************************************************************/
 /*                                                                        */
 /*  FUNCTION                                               RELEASE        */
@@ -94,15 +89,20 @@ int back;
     ts.tv_nsec = 200000;
 
     /* Loop forever.  */
-    while(1)
-    {
+    while (1) {
 info("_tx_thread_schedule\n");
-        do {
-            tx_linux_sem_wait(_tx_sch_start_semaphore);
-        } while (!_tx_thread_execute_ptr);
+        tx_linux_sem_wait(_tx_schedule_semaphore);
+
+        //while (!_tx_thread_execute_ptr || pthread_main_np() || !pthread_equal(_tx_thread_execute_ptr->tx_thread_linux_thread_id, pthread_self()));
         info("sche");
 
-        tx_linux_mutex_lock(_tx_linux_mutex);
+        if ((NULL == _tx_thread_execute_ptr)
+         || (!pthread_main_np() && !pthread_equal(_tx_thread_execute_ptr->tx_thread_linux_thread_id, pthread_self()))) {
+            continue;
+        }
+
+
+        tx_linux_mutex_lock(_tx_macos_mutex);
 
         back = 0;
         if (_tx_thread_execute_ptr) {
@@ -122,17 +122,17 @@ info("_tx_thread_schedule\n");
             back = pthread_equal(_tx_thread_current_ptr->tx_thread_linux_thread_id, pthread_self());
         }
         /* Unlock linux mutex. */
-        tx_linux_mutex_unlock(_tx_linux_mutex);
+        tx_linux_mutex_unlock(_tx_macos_mutex);
 
+    tx_linux_sem_post_nolock(_tx_sch_end_semaphore);
 
-        tx_linux_sem_post_nolock(_tx_sch_end_semaphore);
 #if 1
         if (!back) {
             continue;
         }
 #endif
         if (pthread_main_np()) {
-            info("dio world");
+            info("the world of dio");
             sleep(-1);
         }
 

@@ -501,9 +501,9 @@ VOID   _tx_thread_interrupt_restore(UINT previous_posture);
         } \
     } while (1)
 
-#define tx_linux_sem_post(p)                tx_linux_mutex_lock(_tx_linux_mutex);\
+#define tx_linux_sem_post(p)                tx_linux_mutex_lock(_tx_macos_mutex);\
                                             sem_post(p);\
-                                            tx_linux_mutex_unlock(_tx_linux_mutex)
+                                            tx_linux_mutex_unlock(_tx_macos_mutex)
 #define tx_linux_sem_post_nolock(p)         sem_post(p)
 #define tx_linux_sem_wait(p)                sem_wait(p)
 
@@ -519,19 +519,16 @@ VOID   _tx_thread_interrupt_restore(UINT previous_posture);
 
 
 /* Define the version ID of ThreadX.  This may be utilized by the application.  */
-
 #ifdef TX_THREAD_INIT
-CHAR                            _tx_version_id[] =
-                                    "Copyright (c) Microsoft Corporation * ThreadX Linux/gcc Version 6.1.9 *";
+CHAR _tx_version_id[] = "Copyright (c) Microsoft Corporation * ThreadX macos/xcode Version 6.1.9 *";
 #else
-extern  CHAR                    _tx_version_id[];
+extern CHAR _tx_version_id[];
 #endif
 
 
 /* Define externals for the Linux port of ThreadX.  */
-
-extern pthread_mutex_t                          _tx_linux_mutex;
-extern sem_t                                    *_tx_sch_start_semaphore;
+extern pthread_mutex_t _tx_macos_mutex;
+extern sem_t                                    *_tx_schedule_semaphore;
 extern sem_t                                    *_tx_sch_end_semaphore;
 extern ULONG                                    _tx_linux_global_int_disabled_flag;
 extern struct timespec                          _tx_linux_time_stamp;
@@ -547,22 +544,30 @@ void    _tx_linux_thread_init();
 #endif
 
 /* Define priorities of pthreads. */
-
-#define TX_LINUX_PRIORITY_SCHEDULE              (3)
-#define TX_LINUX_PRIORITY_ISR                   (2)
-#define TX_LINUX_PRIORITY_USER_THREAD           (1)
+#define TX_LINUX_PRIORITY_SCHEDULE    (3)
+#define TX_LINUX_PRIORITY_ISR         (2)
+#define TX_LINUX_PRIORITY_USER_THREAD (1)
 
 #include <stdio.h>
 #include <pthread.h>
+
+#define println(fmt, arg...) \
+    do { \
+        uint64_t _tid; \
+        pthread_mutex_lock(&_tx_macos_mutex); \
+        pthread_threadid_np(NULL, &_tid); \
+        printf("tid 0x%llx: ", _tid); printf(fmt"\n", ##arg); \
+        pthread_mutex_unlock(&_tx_macos_mutex); \
+    } while (0)
 
 #if 0
 #define info(fmt, arg...) \
     do { \
         uint64_t _tid; \
-        pthread_mutex_lock(&_tx_linux_mutex); \
+        pthread_mutex_lock(&_tx_macos_mutex); \
         pthread_threadid_np(NULL, &_tid); \
-        printf("id 0x%llx: ", _tid); printf(fmt"\n", ##arg); \
-        pthread_mutex_unlock(&_tx_linux_mutex); \
+        printf("tid 0x%llx: ", _tid); printf(fmt"\n", ##arg); \
+        pthread_mutex_unlock(&_tx_macos_mutex); \
     } while (0)
 #else
 #define info(fmt, arg...) do { } while (0)

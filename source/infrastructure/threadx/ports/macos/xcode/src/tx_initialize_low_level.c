@@ -1,6 +1,6 @@
 /**************************************************************************/
 /*                                                                        */
-/*       Copyright (c) Microsoft Corporation. All rights reserved.        */
+/*       Copyright (c) thoughtworks Corporation. All rights reserved.     */
 /*                                                                        */
 /*       This software is licensed under the Microsoft Software License   */
 /*       Terms for Microsoft Azure RTOS. Full text of the license can be  */
@@ -26,17 +26,18 @@
 
 /* Include necessary system files.  */
 
-#include "tx_api.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
 #include <errno.h>
 
+#include "tx_api.h"
+
 /* Define various Linux objects used by the ThreadX port.  */
 
-pthread_mutex_t     _tx_linux_mutex;
-sem_t               *_tx_sch_start_semaphore;
+pthread_mutex_t _tx_macos_mutex;
+sem_t               *_tx_schedule_semaphore;
 sem_t               *_tx_sch_end_semaphore;
 ULONG               _tx_linux_global_int_disabled_flag;
 struct timespec     _tx_linux_time_stamp;
@@ -76,6 +77,7 @@ VOID    _tx_initialize_low_level(VOID);
 VOID    _tx_thread_context_save(VOID);
 VOID    _tx_thread_context_restore(VOID);
 
+VOID   _tx_thread_schedule(VOID);
 
 /* Define other external variable references.  */
 
@@ -154,10 +156,10 @@ pthread_mutexattr_t attr;
        other stuff out.  */
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-    pthread_mutex_init(&_tx_linux_mutex, &attr);
-    sem_unlink("_tx_sch_start_semaphore");
+    pthread_mutex_init(&_tx_macos_mutex, &attr);
+    sem_unlink("_tx_schedule_semaphore");
     sem_unlink("_tx_sch_end_semaphore");
-    _tx_sch_start_semaphore = sem_open("_tx_sch_start_semaphore", O_CREAT, 0666, 0);
+    _tx_schedule_semaphore = sem_open("_tx_schedule_semaphore", O_CREAT, 0666, 0);
     _tx_sch_end_semaphore = sem_open("_tx_sch_end_semaphore", O_CREAT, 0666, 0);
 
     /* Initialize the global interrupt disabled flag.  */
@@ -252,6 +254,7 @@ info("::::::::timer loop:::::::::: %d", tick++);
             }
         } while (result != ETIMEDOUT);
 info(":::::time end......");
+tx_linux_mutex_lock(_tx_macos_mutex);
         /* Call ThreadX context save for interrupt preparation.  */
         _tx_thread_context_save();
 info(":::::time end....333..");
@@ -260,14 +263,16 @@ info(":::::time end....333..");
 info(":::::::timer proc start");
         /* Call the ThreadX system timer interrupt processing.  */
         _tx_timer_interrupt();
-        tx_linux_sem_post_nolock(_tx_sch_start_semaphore);
-  //      tx_linux_sem_wait(_tx_sch_end_semaphore);
+        //_tx_thread_schedule();
+        tx_linux_sem_post_nolock(_tx_schedule_semaphore);
+
 info(":::::::timer proc end");
         /* Call trace ISR exit event insert.  */
         _tx_trace_isr_exit_insert(0);
 
         /* Call ThreadX context restore for interrupt completion.  */
         _tx_thread_context_restore();
+tx_linux_mutex_unlock(_tx_macos_mutex);
     }
 }
 
@@ -317,9 +322,9 @@ void    _tx_linux_thread_suspend(TX_THREAD *thread)
 info("suspend %d %lx", pthread_equal(thread_id, _tx_linux_timer_id), thread_id);
 thread->tx_macos_thread_suspend = 1;
     /* Send signal. */info("suspend kill");
-    //tx_linux_mutex_lock(_tx_linux_mutex);
+    //tx_linux_mutex_lock(_tx_macos_mutex);
     pthread_kill(thread_id, SUSPEND_SIG);info("suspend killed");
-    //tx_linux_mutex_unlock(_tx_linux_mutex);
+    //tx_linux_mutex_unlock(_tx_macos_mutex);
 
 
 #if 0
@@ -336,9 +341,9 @@ void    _tx_linux_thread_resume(TX_THREAD *thread)
 {
 info("resume %lx", thread->tx_thread_linux_thread_id);
     /* Send signal. */
-    tx_linux_mutex_lock(_tx_linux_mutex);
+    tx_linux_mutex_lock(_tx_macos_mutex);
     pthread_kill(thread->tx_thread_linux_thread_id, RESUME_SIG);
-    tx_linux_mutex_unlock(_tx_linux_mutex);
+    tx_linux_mutex_unlock(_tx_macos_mutex);
     thread->tx_macos_thread_suspend = 0;
 }
 
