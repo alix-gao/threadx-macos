@@ -96,13 +96,15 @@ info("_tx_thread_schedule\n");
         //while (!_tx_thread_execute_ptr || pthread_main_np() || !pthread_equal(_tx_thread_execute_ptr->tx_thread_linux_thread_id, pthread_self()));
         info("sche");
 
-        if ((NULL == _tx_thread_execute_ptr)
-         || (!pthread_main_np() && !pthread_equal(_tx_thread_execute_ptr->tx_thread_linux_thread_id, pthread_self()))) {
-            continue;
-        }
 
 
         tx_linux_mutex_lock(_tx_macos_mutex);
+
+        if ((NULL == _tx_thread_execute_ptr)
+         || (!pthread_main_np() && !pthread_equal(_tx_thread_execute_ptr->tx_thread_linux_thread_id, pthread_self()))) {
+             tx_linux_mutex_unlock(_tx_macos_mutex);
+            continue;
+        }
 
         back = 0;
         if (_tx_thread_execute_ptr) {
@@ -127,12 +129,12 @@ info("_tx_thread_schedule\n");
     tx_linux_sem_post_nolock(_tx_sch_end_semaphore);
 
 #if 1
-        if (!back) {
+        if (0 == back) {
             continue;
         }
 #endif
         if (pthread_main_np()) {
-            info("the world of dio");
+            printf("the world of dio");
             sleep(-1);
         }
 

@@ -290,10 +290,7 @@ info("suspend handler, %d %lx %lx", pthread_equal(pthread_self(), _tx_linux_time
         tx_linux_sem_post_nolock(_tx_linux_thread_timer_wait);
     else
         tx_linux_sem_post_nolock(_tx_linux_thread_other_wait);
-
-    if(_tx_linux_thread_suspended)
-        return;
-
+//printf("N%x",pthread_self());
 info("===================suspend handler");
     _tx_linux_thread_suspended = 1;
     sigsuspend(&_tx_linux_thread_wait_mask);
@@ -304,13 +301,13 @@ void    _tx_linux_thread_suspend(TX_THREAD *thread)
 {
     sigset_t set;
     pthread_t thread_id = thread->tx_thread_linux_thread_id;
-
+//printf("@%x",thread_id);
     if (thread->tx_macos_thread_suspend) {
-        return;
+        printf("&");return;
     }
-
+if (0 == thread_id) {dump_callstack();}
     if (pthread_kill(thread_id, 0)) {
-        info("thread not exist");
+        printf("^%x-%s\n",thread_id, thread->tx_thread_name);info("thread not exist");
         return;
     }
 
@@ -340,6 +337,7 @@ thread->tx_macos_thread_suspend = 1;
 void    _tx_linux_thread_resume(TX_THREAD *thread)
 {
 info("resume %lx", thread->tx_thread_linux_thread_id);
+
     /* Send signal. */
     tx_linux_mutex_lock(_tx_macos_mutex);
     pthread_kill(thread->tx_thread_linux_thread_id, RESUME_SIG);

@@ -79,7 +79,7 @@ VOID   _tx_timer_interrupt(VOID)
 {
     /* Lock mutex to ensure other threads are not playing with
        the core ThreadX data structures.  */
-    tx_linux_mutex_lock(_tx_linux_mutex);
+    tx_linux_mutex_lock(_tx_macos_mutex);
 
     /* Increment the system clock.  */
     _tx_timer_system_clock++;
@@ -144,6 +144,6 @@ VOID   _tx_timer_interrupt(VOID)
     }
 
     /* Unlock linux mutex. */
-    tx_linux_mutex_unlock(_tx_linux_mutex);
+    tx_linux_mutex_unlock(_tx_macos_mutex);
 }
 

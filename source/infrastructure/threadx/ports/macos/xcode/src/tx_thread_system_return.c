@@ -92,7 +92,7 @@ int         exit_code = 0;
 info(":::::::::::::::::::::::::::::return %s r1\n", _tx_thread_current_ptr->tx_thread_name);
 //dump_callstack();
     /* Lock Linux mutex.  */
-    tx_linux_mutex_lock(_tx_linux_mutex);
+    tx_linux_mutex_lock(_tx_macos_mutex);
 
     /* First, determine if the thread was terminated.  */
 
@@ -111,7 +111,7 @@ info(":::::::::::::::::::::::::::::return %s r1\n", _tx_thread_current_ptr->tx_t
         /* This indicates the Linux thread was actually terminated by ThreadX is only
            being allowed to run in order to cleanup its resources.  */
         /* Unlock linux mutex. */
-        tx_linux_mutex_recursive_unlock(_tx_linux_mutex);
+        tx_linux_mutex_recursive_unlock(_tx_macos_mutex);
         pthread_exit((void *)&exit_code);
     }
 
@@ -137,17 +137,17 @@ info(":::::::::::::::::::::::::::::return %s r1\n", _tx_thread_current_ptr->tx_t
     _tx_thread_current_ptr =  TX_NULL;
 
     /* Unlock Linux mutex.  */
-    tx_linux_mutex_recursive_unlock(_tx_linux_mutex);
+    tx_linux_mutex_recursive_unlock(_tx_macos_mutex);
 
-    _tx_thread_schedule();
+  _tx_thread_schedule();
 #if 0
     /* Make sure semaphore is 0. */
-    while(!sem_trywait(_tx_sch_start_semaphore));
+    while(!sem_trywait(_tx_schedule_semaphore));
 info("return %s r2\n", temp_thread_ptr->tx_thread_name);
     /* Release the semaphore that the main scheduling thread is waiting
        on.  Note that the main scheduling algorithm will take care of
        setting the current thread pointer to NULL.  */
-    tx_linux_sem_post(_tx_sch_start_semaphore);
+    tx_linux_sem_post(_tx_schedule_semaphore);
 
     /* Determine if the thread was self-terminating.  */
     if (temp_thread_state ==  TX_TERMINATED)
@@ -160,10 +160,10 @@ info("return %s r2\n", temp_thread_ptr->tx_thread_name);
     /* Wait on the run semaphore for this thread.  This won't get set again
        until the thread is scheduled.  */
     tx_linux_sem_wait(temp_run_semaphore);info("return %s r3\n", temp_thread_ptr->tx_thread_name);
-    tx_linux_sem_post_nolock(_tx_sch_start_semaphore);
+    tx_linux_sem_post_nolock(_tx_schedule_semaphore);
 
     /* Lock Linux mutex.  */
-    tx_linux_mutex_lock(_tx_linux_mutex);
+    tx_linux_mutex_lock(_tx_macos_mutex);
 
     /* Determine if the thread was terminated.  */
 
@@ -177,7 +177,7 @@ info("return %s r2\n", temp_thread_ptr->tx_thread_name);
     {
 
         /* Unlock Linux mutex.  */
-        tx_linux_mutex_recursive_unlock(_tx_linux_mutex);
+        tx_linux_mutex_recursive_unlock(_tx_macos_mutex);
 
         /* This indicates the Linux thread was actually terminated by ThreadX and is only
            being allowed to run in order to cleanup its resources.  */
@@ -191,7 +191,7 @@ info("return %s r2\n", temp_thread_ptr->tx_thread_name);
     {
 
         /* Unlock Linux mutex.  */
-        tx_linux_mutex_recursive_unlock(_tx_linux_mutex);
+        tx_linux_mutex_recursive_unlock(_tx_macos_mutex);
     }
 info("return %s end\n", temp_thread_ptr->tx_thread_name);
 #endif

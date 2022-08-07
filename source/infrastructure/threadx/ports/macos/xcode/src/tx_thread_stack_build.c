@@ -34,8 +34,35 @@
 
 /* Prototype for new thread entry function.  */
 
-void *_tx_linux_thread_entry(void *ptr);
+void *_tx_linux_thread_entry(void *ptr)
+{
 
+TX_THREAD  *thread_ptr;
+
+    /* Pickup the current thread pointer.  */
+    thread_ptr =  (TX_THREAD *) ptr;
+    _tx_linux_threadx_thread = 1;
+    nice(20);
+info("%s %lx entry\n", thread_ptr->tx_thread_name, pthread_self());
+
+    /* thread entry may start before pthread_create is returned.
+       so thread id maybe 0, here wait for thread id */
+    while (0 == thread_ptr->tx_thread_linux_thread_id) {
+        printf(".........................wait for %s\n", thread_ptr->tx_thread_name);
+        sleep(1);
+    }
+    /* Now suspend the thread initially.  If the thread has already
+       been scheduled, this will return immediately.  */
+    //tx_linux_sem_wait(thread_ptr -> tx_thread_linux_thread_run_semaphore);
+    thread_ptr->tx_macos_thread_suspend = 0;
+    _tx_linux_thread_suspend(thread_ptr);
+    //tx_linux_sem_post_nolock(_tx_schedule_semaphore);
+info("%s entry go\n", thread_ptr->tx_thread_name);
+    /* Call ThreadX thread entry point.  */
+    _tx_thread_shell_entry();
+
+    return EXIT_SUCCESS;
+}
 
 /**************************************************************************/
 /*                                                                        */
@@ -102,7 +129,7 @@ struct sched_param sp;
         {
         }
     }
-
+//printf("<%s ",thread_ptr->tx_thread_name);
     /* Create a Linux thread for the application thread.  */
     if(pthread_create(&thread_ptr -> tx_thread_linux_thread_id, NULL, _tx_linux_thread_entry, thread_ptr))
     {
@@ -112,7 +139,7 @@ struct sched_param sp;
         while(1)
         {
         }
-    }
+    }//printf(">");
     thread_ptr->tx_macos_thread_suspend = 0;
 info("create id %lx", thread_ptr -> tx_thread_linux_thread_id);
     /* Otherwise, we have a good thread create.  */
@@ -133,28 +160,3 @@ info("create id %lx", thread_ptr -> tx_thread_linux_thread_id);
     /* Clear the first word of the stack.  */
     *(((ULONG *) thread_ptr -> tx_thread_stack_ptr) - 1) =  0;
 }
-
-
-void *_tx_linux_thread_entry(void *ptr)
-{
-
-TX_THREAD  *thread_ptr;
-
-    /* Pickup the current thread pointer.  */
-    thread_ptr =  (TX_THREAD *) ptr;
-    _tx_linux_threadx_thread = 1;
-    nice(20);
-info("%s %lx entry\n", thread_ptr->tx_thread_name, pthread_self());
-    /* Now suspend the thread initially.  If the thread has already
-       been scheduled, this will return immediately.  */
-    //tx_linux_sem_wait(thread_ptr -> tx_thread_linux_thread_run_semaphore);
-    thread_ptr->tx_macos_thread_suspend = 0;
-    _tx_linux_thread_suspend(thread_ptr);
-    //tx_linux_sem_post_nolock(_tx_sch_start_semaphore);
-info("%s entry go\n", thread_ptr->tx_thread_name);
-    /* Call ThreadX thread entry point.  */
-    _tx_thread_shell_entry();
-
-    return EXIT_SUCCESS;
-}
-
