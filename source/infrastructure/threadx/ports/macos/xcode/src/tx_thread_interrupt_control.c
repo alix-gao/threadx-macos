@@ -110,7 +110,7 @@ int         exit_code = 0;
     /* Determine if this is a thread and it does not
        match the current thread pointer.  */
     if ((_tx_linux_threadx_thread) &&
-        ((!thread_ptr) || (!pthread_equal(thread_ptr -> tx_macos_thread_id, thread_id))))
+        ((!thread_ptr) || (!pthread_equal(thread_ptr->tx_macos_thread_id, thread_id))))
     {
         printf("pthread exit %p\n", thread_ptr);
         dump_callstack();
@@ -168,7 +168,7 @@ while (1) info(".");
             pic_status++;
 
             /* Clear the disabled flag.  */
-            _tx_thread_current_ptr -> tx_thread_linux_int_disabled_flag =  TX_FALSE;
+            _tx_thread_current_ptr->tx_thread_linux_int_disabled_flag =  TX_FALSE;
 
             /* Determine if the critical section is locked.  */
             tx_linux_mutex_recursive_unlock(_tx_macos_mutex);
@@ -178,7 +178,7 @@ while (1) info(".");
             pic_status--;
 
             /* Set the disabled flag.  */
-            _tx_thread_current_ptr -> tx_thread_linux_int_disabled_flag =  TX_TRUE;
+            _tx_thread_current_ptr->tx_thread_linux_int_disabled_flag =  TX_TRUE;
         }
     }
 

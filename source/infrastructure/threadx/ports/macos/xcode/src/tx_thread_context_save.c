@@ -86,7 +86,7 @@ VOID   _tx_thread_context_save(VOID)
         _tx_linux_thread_suspend(_tx_thread_current_ptr);
 
         /* Indicate that this thread was suspended asynchronously.  */
-        _tx_thread_current_ptr -> tx_thread_linux_suspension_type =  1;
+        _tx_thread_current_ptr->tx_thread_linux_suspension_type =  1;
     }
 
     /* Increment the nested interrupt condition.  */

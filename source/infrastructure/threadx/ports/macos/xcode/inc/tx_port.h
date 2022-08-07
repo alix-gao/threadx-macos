@@ -184,7 +184,7 @@ extern TEST_FLAG        test_forced_mutex_timeout;
 
 #define TX_BYTE_ALLOCATE_EXTENSION              if (threadx_byte_allocate_loop_test == ((TEST_FLAG) 1))         \
                                                 {                                                               \
-                                                    pool_ptr -> tx_byte_pool_owner =  TX_NULL;                  \
+                                                    pool_ptr->tx_byte_pool_owner =  TX_NULL;                  \
                                                     threadx_byte_allocate_loop_test = ((TEST_FLAG) 0);          \
                                                 }
 
@@ -204,7 +204,7 @@ extern TEST_FLAG        test_forced_mutex_timeout;
 #define TX_MUTEX_PUT_EXTENSION_2                if (test_forced_mutex_timeout == ((TEST_FLAG) 1))               \
                                                 {                                                               \
                                                     test_forced_mutex_timeout = ((TEST_FLAG) 0);                \
-                                                    _tx_thread_wait_abort(mutex_ptr -> tx_mutex_suspension_list); \
+                                                    _tx_thread_wait_abort(mutex_ptr->tx_mutex_suspension_list); \
                                                 }
 
 
@@ -227,12 +227,12 @@ extern TEST_FLAG        test_forced_mutex_timeout;
 
 #define TX_THREAD_STACK_ANALYZE_EXTENSION       if (test_stack_analyze_flag == ((TEST_FLAG) 1))                 \
                                                 {                                                               \
-                                                    thread_ptr -> tx_thread_id =  ((TEST_FLAG) 0);              \
+                                                    thread_ptr->tx_thread_id =  ((TEST_FLAG) 0);              \
                                                     test_stack_analyze_flag =     ((TEST_FLAG) 0);              \
                                                 }                                                               \
                                                 else if (test_stack_analyze_flag == ((TEST_FLAG) 2))            \
                                                 {                                                               \
-                                                    stack_ptr =  thread_ptr -> tx_thread_stack_start;           \
+                                                    stack_ptr =  thread_ptr->tx_thread_stack_start;           \
                                                     test_stack_analyze_flag =     ((TEST_FLAG) 0);              \
                                                 }                                                               \
                                                 else if (test_stack_analyze_flag == ((TEST_FLAG) 3))            \
@@ -466,14 +466,14 @@ void _tx_thread_reset_port_completion(struct TX_THREAD_STRUCT *thread_ptr, UINT 
 
 /* Define the thread timeout setup logic in _tx_thread_create.  */
 
-#define TX_THREAD_CREATE_TIMEOUT_SETUP(t)    (t) -> tx_thread_timer.tx_timer_internal_timeout_function =    &(_tx_thread_timeout);            \
-                                             (t) -> tx_thread_timer.tx_timer_internal_timeout_param =       0;                                \
-                                             (t) -> tx_thread_timer.tx_timer_internal_extension_ptr =       (VOID *) (t);
+#define TX_THREAD_CREATE_TIMEOUT_SETUP(t)    (t)->tx_thread_timer.tx_timer_internal_timeout_function =    &(_tx_thread_timeout);            \
+                                             (t)->tx_thread_timer.tx_timer_internal_timeout_param =       0;                                \
+                                             (t)->tx_thread_timer.tx_timer_internal_extension_ptr =       (VOID *) (t);
 
 
 /* Define the thread timeout pointer setup in _tx_thread_timeout.  */
 
-#define TX_THREAD_TIMEOUT_POINTER_SETUP(t)   (t) =  (TX_THREAD *) _tx_timer_expired_timer_ptr -> tx_timer_internal_extension_ptr;
+#define TX_THREAD_TIMEOUT_POINTER_SETUP(t)   (t) =  (TX_THREAD *) _tx_timer_expired_timer_ptr->tx_timer_internal_extension_ptr;
 #endif /* __x86_64__ */
 
 

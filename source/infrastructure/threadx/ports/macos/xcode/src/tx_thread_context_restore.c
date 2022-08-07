@@ -102,7 +102,7 @@ VOID   _tx_thread_context_restore(VOID)
 
             /* Save the remaining time-slice and disable it.  */
             if (_tx_timer_time_slice) {
-                _tx_thread_current_ptr -> tx_thread_time_slice =  _tx_timer_time_slice;
+                _tx_thread_current_ptr->tx_thread_time_slice =  _tx_timer_time_slice;
                 _tx_timer_time_slice =  0;
             }
 

@@ -71,18 +71,18 @@ VOID _tx_thread_schedule(VOID)
             continue;
         }
 
-        /* Yes! We have a thread to execute. Note that the critical section is already
-        active from the scheduling loop above.  */
+        /* Yes! We have a thread to execute.
+           Note that the critical section is already active from the scheduling loop above. */
 
-        /* Setup the current thread pointer.  */
+        /* Setup the current thread pointer. */
         _tx_thread_current_ptr = _tx_thread_execute_ptr;
 
         info("schedule result %s\n", _tx_thread_current_ptr->tx_thread_name);
 
-        /* Increment the run count for this thread.  */
+        /* Increment the run count for this thread. */
         _tx_thread_current_ptr->tx_thread_run_count++;
 
-        /* Setup time-slice, if present.  */
+        /* Setup time-slice, if present. */
         _tx_timer_time_slice = _tx_thread_current_ptr->tx_thread_time_slice;
 
         loop = pthread_equal(_tx_thread_current_ptr->tx_macos_thread_id, pthread_self());
@@ -99,8 +99,8 @@ void _tx_thread_delete_port_completion(TX_THREAD *thread_ptr, UINT tx_saved_post
     pthread_t       thread_id;
     struct          timespec ts;
 
-    thread_id = thread_ptr -> tx_macos_thread_id;
-    threadrunsemaphore = thread_ptr -> tx_thread_linux_thread_run_semaphore;
+    thread_id = thread_ptr->tx_macos_thread_id;
+    threadrunsemaphore = thread_ptr->tx_thread_linux_thread_run_semaphore;
     ts.tv_sec = 0;
     ts.tv_nsec = 1000000;
     TX_RESTORE
@@ -126,8 +126,8 @@ void _tx_thread_reset_port_completion(TX_THREAD *thread_ptr, UINT tx_saved_postu
     pthread_t thread_id;
     struct timespec ts;
 
-    thread_id = thread_ptr -> tx_macos_thread_id;
-    threadrunsemaphore = thread_ptr -> tx_thread_linux_thread_run_semaphore;
+    thread_id = thread_ptr->tx_macos_thread_id;
+    threadrunsemaphore = thread_ptr->tx_thread_linux_thread_run_semaphore;
     ts.tv_sec = 0;
     ts.tv_nsec = 1000000;
     TX_RESTORE
