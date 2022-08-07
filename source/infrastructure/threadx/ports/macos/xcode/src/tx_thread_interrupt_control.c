@@ -72,7 +72,7 @@ VOID   _tx_thread_interrupt_restore(UINT previous_posture)
 /*                                                                        */
 /*  CALLS                                                                 */
 /*                                                                        */
-/*    tx_linux_mutex_lock                                                 */
+/*    tx_macos_mutex_lock                                                 */
 /*    pthread_self                                                        */
 /*    pthread_getschedparam                                               */
 /*    tx_linux_mutex_recursive_unlock                                     */
@@ -99,7 +99,7 @@ int         exit_code = 0;
 
 
     /* Lock Linux mutex. */
-    tx_linux_mutex_lock(_tx_macos_mutex);
+    tx_macos_mutex_lock(_tx_macos_mutex);
 
     /* Pickup the id of the current thread.  */
     thread_id = pthread_self();
@@ -110,7 +110,7 @@ int         exit_code = 0;
     /* Determine if this is a thread and it does not
        match the current thread pointer.  */
     if ((_tx_linux_threadx_thread) &&
-        ((!thread_ptr) || (!pthread_equal(thread_ptr -> tx_thread_linux_thread_id, thread_id))))
+        ((!thread_ptr) || (!pthread_equal(thread_ptr -> tx_macos_thread_id, thread_id))))
     {
         printf("pthread exit %p\n", thread_ptr);
         dump_callstack();

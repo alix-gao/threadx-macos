@@ -47,13 +47,13 @@ info("%s %lx entry\n", thread_ptr->tx_thread_name, pthread_self());
 
     /* thread entry may start before pthread_create is returned.
        so thread id maybe 0, here wait for thread id */
-    while (0 == thread_ptr->tx_thread_linux_thread_id) {
+    while (0 == thread_ptr->tx_macos_thread_id) {
         printf(".........................wait for %s\n", thread_ptr->tx_thread_name);
         sleep(1);
     }
     /* Now suspend the thread initially.  If the thread has already
        been scheduled, this will return immediately.  */
-    //tx_linux_sem_wait(thread_ptr -> tx_thread_linux_thread_run_semaphore);
+    //tx_macos_sem_wait(thread_ptr -> tx_thread_linux_thread_run_semaphore);
     thread_ptr->tx_macos_thread_suspend = 0;
     _tx_linux_thread_suspend(thread_ptr);
     //tx_linux_sem_post_nolock(_tx_schedule_semaphore);
@@ -131,7 +131,7 @@ struct sched_param sp;
     }
 //printf("<%s ",thread_ptr->tx_thread_name);
     /* Create a Linux thread for the application thread.  */
-    if(pthread_create(&thread_ptr -> tx_thread_linux_thread_id, NULL, _tx_linux_thread_entry, thread_ptr))
+    if(pthread_create(&thread_ptr -> tx_macos_thread_id, NULL, _tx_linux_thread_entry, thread_ptr))
     {
 
         /* Display an error message.  */
@@ -141,10 +141,10 @@ struct sched_param sp;
         }
     }//printf(">");
     thread_ptr->tx_macos_thread_suspend = 0;
-info("create id %lx", thread_ptr -> tx_thread_linux_thread_id);
+info("create id %lx", thread_ptr -> tx_macos_thread_id);
     /* Otherwise, we have a good thread create.  */
     sp.sched_priority = TX_LINUX_PRIORITY_USER_THREAD;
-    pthread_setschedparam(thread_ptr -> tx_thread_linux_thread_id, SCHED_FIFO, &sp);
+    pthread_setschedparam(thread_ptr -> tx_macos_thread_id, SCHED_FIFO, &sp);
 
     /* Setup the thread suspension type to solicited thread suspension.
        Pseudo interrupt handlers will suspend with this field set to 1.  */

@@ -375,7 +375,7 @@ void    _tx_initialize_start_interrupts(void);
    for the multiple macros is so that backward compatibility can be maintained with
    existing ThreadX kernel awareness modules.  */
 
-#define TX_THREAD_EXTENSION_0                                               pthread_t   tx_thread_linux_thread_id; \
+#define TX_THREAD_EXTENSION_0                                               pthread_t   tx_macos_thread_id; \
                                                                             sem_t       *tx_thread_linux_thread_run_semaphore; \
                                                                             UINT        tx_thread_linux_suspension_type; \
                                                                             UINT        tx_thread_linux_int_disabled_flag;
@@ -492,8 +492,8 @@ VOID   _tx_thread_interrupt_restore(UINT previous_posture);
 #define TX_DISABLE                          tx_saved_posture =   _tx_thread_interrupt_disable();
 #define TX_RESTORE                          _tx_thread_interrupt_restore(tx_saved_posture);
 
-#define tx_linux_mutex_lock(p)              pthread_mutex_lock(&p)
-#define tx_linux_mutex_unlock(p)            pthread_mutex_unlock(&p)
+#define tx_macos_mutex_lock(p)              pthread_mutex_lock(&p)
+#define tx_macos_mutex_unlock(p)            pthread_mutex_unlock(&p)
 #define tx_linux_mutex_recursive_unlock(p) \
     do {\
         if (EPERM == pthread_mutex_unlock(&p)) { \
@@ -501,11 +501,11 @@ VOID   _tx_thread_interrupt_restore(UINT previous_posture);
         } \
     } while (1)
 
-#define tx_linux_sem_post(p)                tx_linux_mutex_lock(_tx_macos_mutex);\
+#define tx_linux_sem_post(p)                tx_macos_mutex_lock(_tx_macos_mutex);\
                                             sem_post(p);\
-                                            tx_linux_mutex_unlock(_tx_macos_mutex)
+                                            tx_macos_mutex_unlock(_tx_macos_mutex)
 #define tx_linux_sem_post_nolock(p)         sem_post(p)
-#define tx_linux_sem_wait(p)                sem_wait(p)
+#define tx_macos_sem_wait(p)                sem_wait(p)
 
 
 /* Define the interrupt lockout macros for each ThreadX object.  */
@@ -528,8 +528,7 @@ extern CHAR _tx_version_id[];
 
 /* Define externals for the Linux port of ThreadX.  */
 extern pthread_mutex_t _tx_macos_mutex;
-extern sem_t                                    *_tx_schedule_semaphore;
-extern sem_t                                    *_tx_sch_end_semaphore;
+extern sem_t *_tx_schedule_semaphore;
 extern ULONG                                    _tx_linux_global_int_disabled_flag;
 extern struct timespec                          _tx_linux_time_stamp;
 extern __thread int                             _tx_linux_threadx_thread;

@@ -58,16 +58,16 @@
 /*                                                                        */
 /*  CALLS                                                                 */
 /*                                                                        */
-/*    tx_linux_mutex_lock                                                 */
+/*    tx_macos_mutex_lock                                                 */
 /*    pthread_self                                                        */
 /*    pthread_getschedparam                                               */
 /*    pthread_equal                                                       */
 /*    tx_linux_mutex_recursive_unlock                                     */
-/*    tx_linux_mutex_unlock                                               */
+/*    tx_macos_mutex_unlock                                               */
 /*    pthread_exit                                                        */
 /*    tx_linux_sem_post                                                   */
 /*    sem_trywait                                                         */
-/*    tx_linux_sem_wait                                                   */
+/*    tx_macos_sem_wait                                                   */
 /*                                                                        */
 /*  CALLED BY                                                             */
 /*                                                                        */
@@ -92,7 +92,7 @@ int         exit_code = 0;
 info(":::::::::::::::::::::::::::::return %s r1\n", _tx_thread_current_ptr->tx_thread_name);
 //dump_callstack();
     /* Lock Linux mutex.  */
-    tx_linux_mutex_lock(_tx_macos_mutex);
+    tx_macos_mutex_lock(_tx_macos_mutex);
 
     /* First, determine if the thread was terminated.  */
 
@@ -105,7 +105,7 @@ info(":::::::::::::::::::::::::::::return %s r1\n", _tx_thread_current_ptr->tx_t
     /* Determine if this is a thread (0) and it does not
        match the current thread pointer.  */
     if ((_tx_linux_threadx_thread) &&
-        ((!temp_thread_ptr) || (!pthread_equal(temp_thread_ptr -> tx_thread_linux_thread_id, thread_id))))
+        ((!temp_thread_ptr) || (!pthread_equal(temp_thread_ptr -> tx_macos_thread_id, thread_id))))
     {
 
         /* This indicates the Linux thread was actually terminated by ThreadX is only
@@ -159,11 +159,11 @@ info("return %s r2\n", temp_thread_ptr->tx_thread_name);
 
     /* Wait on the run semaphore for this thread.  This won't get set again
        until the thread is scheduled.  */
-    tx_linux_sem_wait(temp_run_semaphore);info("return %s r3\n", temp_thread_ptr->tx_thread_name);
+    tx_macos_sem_wait(temp_run_semaphore);info("return %s r3\n", temp_thread_ptr->tx_thread_name);
     tx_linux_sem_post_nolock(_tx_schedule_semaphore);
 
     /* Lock Linux mutex.  */
-    tx_linux_mutex_lock(_tx_macos_mutex);
+    tx_macos_mutex_lock(_tx_macos_mutex);
 
     /* Determine if the thread was terminated.  */
 
@@ -173,7 +173,7 @@ info("return %s r2\n", temp_thread_ptr->tx_thread_name);
     /* Determine if this is a thread and it does not
        match the current thread pointer.  */
     if ((_tx_linux_threadx_thread) &&
-        ((!temp_thread_ptr) || (!pthread_equal(temp_thread_ptr -> tx_thread_linux_thread_id, thread_id))))
+        ((!temp_thread_ptr) || (!pthread_equal(temp_thread_ptr -> tx_macos_thread_id, thread_id))))
     {
 
         /* Unlock Linux mutex.  */

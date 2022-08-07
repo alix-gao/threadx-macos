@@ -9,20 +9,7 @@
 /*                                                                        */
 /**************************************************************************/
 
-
-/**************************************************************************/
-/**************************************************************************/
-/**                                                                       */
-/** ThreadX Component                                                     */
-/**                                                                       */
-/**   Thread                                                              */
-/**                                                                       */
-/**************************************************************************/
-/**************************************************************************/
-
-
 #define TX_SOURCE_CODE
-
 
 /* Include necessary system files.  */
 #include <stdio.h>
@@ -39,11 +26,11 @@
 /*                                                                        */
 /*  FUNCTION                                               RELEASE        */
 /*                                                                        */
-/*    _tx_thread_schedule                                 Linux/GNU       */
+/*    _tx_thread_schedule                                 macos/xcode     */
 /*                                                           6.1          */
 /*  AUTHOR                                                                */
 /*                                                                        */
-/*    William E. Lamie, Microsoft Corporation                             */
+/*    cheng.gao, thoughtworks Corporation                                 */
 /*                                                                        */
 /*  DESCRIPTION                                                           */
 /*                                                                        */
@@ -59,108 +46,67 @@
 /*                                                                        */
 /*    None                                                                */
 /*                                                                        */
-/*  CALLS                                                                 */
-/*                                                                        */
-/*    tx_linux_mutex_lock                                                 */
-/*    tx_linux_mutex_unlock                                               */
-/*    _tx_linux_thread_resume                                             */
-/*    tx_linux_sem_post                                                   */
-/*    sem_trywait                                                         */
-/*    tx_linux_sem_wait                                                   */
-/*                                                                        */
-/*  CALLED BY                                                             */
-/*                                                                        */
-/*    _tx_initialize_kernel_enter          ThreadX entry function         */
-/*                                                                        */
 /*  RELEASE HISTORY                                                       */
 /*                                                                        */
 /*    DATE              NAME                      DESCRIPTION             */
 /*                                                                        */
-/*  09-30-2020     William E. Lamie         Initial Version 6.1           */
+/*  08-07-2022        cheng.gao                Initial Version 6.1        */
 /*                                                                        */
 /**************************************************************************/
-VOID   _tx_thread_schedule(VOID)
+VOID _tx_thread_schedule(VOID)
 {
-struct timespec ts;
-int back;
+    int loop;
 
-    /* Set timer. */
-    ts.tv_sec = 0;
-    ts.tv_nsec = 200000;
+    loop = 0;
+    while (0 == loop) {
+        info("_tx_thread_schedule\n");
 
-    /* Loop forever.  */
-    while (1) {
-info("_tx_thread_schedule\n");
-        tx_linux_sem_wait(_tx_schedule_semaphore);
+        tx_macos_sem_wait(_tx_schedule_semaphore);
 
-        //while (!_tx_thread_execute_ptr || pthread_main_np() || !pthread_equal(_tx_thread_execute_ptr->tx_thread_linux_thread_id, pthread_self()));
-        info("sche");
-
-
-
-        tx_linux_mutex_lock(_tx_macos_mutex);
+        tx_macos_mutex_lock(_tx_macos_mutex);
 
         if ((NULL == _tx_thread_execute_ptr)
-         || (!pthread_main_np() && !pthread_equal(_tx_thread_execute_ptr->tx_thread_linux_thread_id, pthread_self()))) {
-             tx_linux_mutex_unlock(_tx_macos_mutex);
+         || (!pthread_main_np() && !pthread_equal(_tx_thread_execute_ptr->tx_macos_thread_id, pthread_self()))) {
+            tx_macos_mutex_unlock(_tx_macos_mutex);
             continue;
         }
 
-        back = 0;
-        if (_tx_thread_execute_ptr) {
+        /* Yes! We have a thread to execute. Note that the critical section is already
+        active from the scheduling loop above.  */
 
-            /* Yes! We have a thread to execute. Note that the critical section is already
-            active from the scheduling loop above.  */
+        /* Setup the current thread pointer.  */
+        _tx_thread_current_ptr = _tx_thread_execute_ptr;
 
-            /* Setup the current thread pointer.  */
-            _tx_thread_current_ptr =  _tx_thread_execute_ptr;
-    info("_tx_thread_schedule :::::::::::::::::::::::: %s\n", _tx_thread_current_ptr->tx_thread_name);
-            /* Increment the run count for this thread.  */
-            _tx_thread_current_ptr -> tx_thread_run_count++;
+        info("schedule result %s\n", _tx_thread_current_ptr->tx_thread_name);
 
-            /* Setup time-slice, if present.  */
-            _tx_timer_time_slice =  _tx_thread_current_ptr -> tx_thread_time_slice;
+        /* Increment the run count for this thread.  */
+        _tx_thread_current_ptr->tx_thread_run_count++;
 
-            back = pthread_equal(_tx_thread_current_ptr->tx_thread_linux_thread_id, pthread_self());
-        }
+        /* Setup time-slice, if present.  */
+        _tx_timer_time_slice = _tx_thread_current_ptr->tx_thread_time_slice;
+
+        loop = pthread_equal(_tx_thread_current_ptr->tx_macos_thread_id, pthread_self());
+
         /* Unlock linux mutex. */
-        tx_linux_mutex_unlock(_tx_macos_mutex);
-
-    tx_linux_sem_post_nolock(_tx_sch_end_semaphore);
-
-#if 1
-        if (0 == back) {
-            continue;
-        }
-#endif
-        if (pthread_main_np()) {
-            printf("the world of dio");
-            sleep(-1);
-        }
-
-        info("_tx_thread_schedule s4\n");
-        break;
-
+        tx_macos_mutex_unlock(_tx_macos_mutex);
     }
 }
 
 void _tx_thread_delete_port_completion(TX_THREAD *thread_ptr, UINT tx_saved_posture)
 {
-INT             linux_status;
-sem_t           *threadrunsemaphore;
-pthread_t       thread_id;
-struct          timespec ts;
+    INT             linux_status;
+    sem_t           *threadrunsemaphore;
+    pthread_t       thread_id;
+    struct          timespec ts;
 
-    thread_id = thread_ptr -> tx_thread_linux_thread_id;
+    thread_id = thread_ptr -> tx_macos_thread_id;
     threadrunsemaphore = thread_ptr -> tx_thread_linux_thread_run_semaphore;
     ts.tv_sec = 0;
     ts.tv_nsec = 1000000;
     TX_RESTORE
-    do
-    {
+    do {
         linux_status = pthread_cancel(thread_id);
-        if(linux_status != EAGAIN)
-        {
+        if (linux_status != EAGAIN) {
             break;
         }
         _tx_linux_thread_resume(thread_ptr);
@@ -175,21 +121,19 @@ struct          timespec ts;
 
 void _tx_thread_reset_port_completion(TX_THREAD *thread_ptr, UINT tx_saved_posture)
 {
-INT             linux_status;
-sem_t           *threadrunsemaphore;
-pthread_t       thread_id;
-struct          timespec ts;
+    INT linux_status;
+    sem_t *threadrunsemaphore;
+    pthread_t thread_id;
+    struct timespec ts;
 
-    thread_id = thread_ptr -> tx_thread_linux_thread_id;
+    thread_id = thread_ptr -> tx_macos_thread_id;
     threadrunsemaphore = thread_ptr -> tx_thread_linux_thread_run_semaphore;
     ts.tv_sec = 0;
     ts.tv_nsec = 1000000;
     TX_RESTORE
-    do
-    {
+    do {
         linux_status = pthread_cancel(thread_id);
-        if(linux_status != EAGAIN)
-        {
+        if (linux_status != EAGAIN) {
             break;
         }
         _tx_linux_thread_resume(thread_ptr);

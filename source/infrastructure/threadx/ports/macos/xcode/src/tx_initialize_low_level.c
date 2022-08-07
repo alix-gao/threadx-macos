@@ -37,8 +37,7 @@
 /* Define various Linux objects used by the ThreadX port.  */
 
 pthread_mutex_t _tx_macos_mutex;
-sem_t               *_tx_schedule_semaphore;
-sem_t               *_tx_sch_end_semaphore;
+sem_t *_tx_schedule_semaphore;
 ULONG               _tx_linux_global_int_disabled_flag;
 struct timespec     _tx_linux_time_stamp;
 __thread int        _tx_linux_threadx_thread = 0;
@@ -158,9 +157,7 @@ pthread_mutexattr_t attr;
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
     pthread_mutex_init(&_tx_macos_mutex, &attr);
     sem_unlink("_tx_schedule_semaphore");
-    sem_unlink("_tx_sch_end_semaphore");
     _tx_schedule_semaphore = sem_open("_tx_schedule_semaphore", O_CREAT, 0666, 0);
-    _tx_sch_end_semaphore = sem_open("_tx_sch_end_semaphore", O_CREAT, 0666, 0);
 
     /* Initialize the global interrupt disabled flag.  */
     _tx_linux_global_int_disabled_flag =  TX_FALSE;
@@ -254,7 +251,7 @@ info("::::::::timer loop:::::::::: %d", tick++);
             }
         } while (result != ETIMEDOUT);
 info(":::::time end......");
-tx_linux_mutex_lock(_tx_macos_mutex);
+tx_macos_mutex_lock(_tx_macos_mutex);
         /* Call ThreadX context save for interrupt preparation.  */
         _tx_thread_context_save();
 info(":::::time end....333..");
@@ -272,7 +269,7 @@ info(":::::::timer proc end");
 
         /* Call ThreadX context restore for interrupt completion.  */
         _tx_thread_context_restore();
-tx_linux_mutex_unlock(_tx_macos_mutex);
+tx_macos_mutex_unlock(_tx_macos_mutex);
     }
 }
 
@@ -300,14 +297,14 @@ info("===================suspend handler");
 void    _tx_linux_thread_suspend(TX_THREAD *thread)
 {
     sigset_t set;
-    pthread_t thread_id = thread->tx_thread_linux_thread_id;
+    pthread_t thread_id = thread->tx_macos_thread_id;
 //printf("@%x",thread_id);
     if (thread->tx_macos_thread_suspend) {
         printf("&");return;
     }
 if (0 == thread_id) {dump_callstack();}
     if (pthread_kill(thread_id, 0)) {
-        printf("^%x-%s\n",thread_id, thread->tx_thread_name);info("thread not exist");
+        printf("%p-%s\n",thread_id, thread->tx_thread_name);info("thread not exist");
         return;
     }
 
@@ -319,29 +316,29 @@ if (0 == thread_id) {dump_callstack();}
 info("suspend %d %lx", pthread_equal(thread_id, _tx_linux_timer_id), thread_id);
 thread->tx_macos_thread_suspend = 1;
     /* Send signal. */info("suspend kill");
-    //tx_linux_mutex_lock(_tx_macos_mutex);
+    //tx_macos_mutex_lock(_tx_macos_mutex);
     pthread_kill(thread_id, SUSPEND_SIG);info("suspend killed");
-    //tx_linux_mutex_unlock(_tx_macos_mutex);
+    //tx_macos_mutex_unlock(_tx_macos_mutex);
 
 
 #if 0
     /* Wait until signal is received. */
     if(pthread_equal(thread_id, _tx_linux_timer_id))
-        tx_linux_sem_wait(_tx_linux_thread_timer_wait);
+        tx_macos_sem_wait(_tx_linux_thread_timer_wait);
     else
-        tx_linux_sem_wait(_tx_linux_thread_other_wait);info("suspend end");
+        tx_macos_sem_wait(_tx_linux_thread_other_wait);info("suspend end");
 #endif
 
 }
 
 void    _tx_linux_thread_resume(TX_THREAD *thread)
 {
-info("resume %lx", thread->tx_thread_linux_thread_id);
+info("resume %lx", thread->tx_macos_thread_id);
 
     /* Send signal. */
-    tx_linux_mutex_lock(_tx_macos_mutex);
-    pthread_kill(thread->tx_thread_linux_thread_id, RESUME_SIG);
-    tx_linux_mutex_unlock(_tx_macos_mutex);
+    tx_macos_mutex_lock(_tx_macos_mutex);
+    pthread_kill(thread->tx_macos_thread_id, RESUME_SIG);
+    tx_macos_mutex_unlock(_tx_macos_mutex);
     thread->tx_macos_thread_suspend = 0;
 }
 

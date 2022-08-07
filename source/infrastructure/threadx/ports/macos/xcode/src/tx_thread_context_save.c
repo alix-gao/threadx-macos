@@ -57,9 +57,9 @@
 /*                                                                        */
 /*  CALLS                                                                 */
 /*                                                                        */
-/*    tx_linux_mutex_lock                                                 */
+/*    tx_macos_mutex_lock                                                 */
 /*    _tx_linux_thread_suspend                                            */
-/*    tx_linux_mutex_unlock                                               */
+/*    tx_macos_mutex_unlock                                               */
 /*                                                                        */
 /*  CALLED BY                                                             */
 /*                                                                        */
@@ -76,7 +76,7 @@ VOID   _tx_thread_context_save(VOID)
 {
     /* Lock mutex to ensure other threads are not playing with
        the core ThreadX data structures.  */
-    tx_linux_mutex_lock(_tx_macos_mutex);
+    tx_macos_mutex_lock(_tx_macos_mutex);
 
     /* If an application thread is running, suspend it to simulate preemption. */
     if ((_tx_thread_current_ptr) && (_tx_thread_system_state == 0))
@@ -93,6 +93,6 @@ VOID   _tx_thread_context_save(VOID)
     _tx_thread_system_state++;
 
     /* Unlock linux mutex. */
-    tx_linux_mutex_unlock(_tx_macos_mutex);
+    tx_macos_mutex_unlock(_tx_macos_mutex);
 }
 

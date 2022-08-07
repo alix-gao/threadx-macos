@@ -59,10 +59,10 @@ UINT _tx_linux_timer_waiting = 0;
 /*                                                                        */
 /*  CALLS                                                                 */
 /*                                                                        */
-/*    tx_linux_mutex_lock                                                 */
+/*    tx_macos_mutex_lock                                                 */
 /*    sem_trywait                                                         */
 /*    tx_linux_sem_post                                                   */
-/*    tx_linux_sem_wait                                                   */
+/*    tx_macos_sem_wait                                                   */
 /*    _tx_linux_thread_resume                                             */
 /*    tx_linux_mutex_recursive_unlock                                     */
 /*                                                                        */
@@ -81,7 +81,7 @@ VOID   _tx_thread_context_restore(VOID)
 {
     /* Lock mutex to ensure other threads are not playing with
        the core ThreadX data structures.  */
-    tx_linux_mutex_lock(_tx_macos_mutex);
+    tx_macos_mutex_lock(_tx_macos_mutex);
 
     /* Determine if interrupts are nested. */
     if ((!--_tx_thread_system_state) && (_tx_thread_current_ptr)) {
