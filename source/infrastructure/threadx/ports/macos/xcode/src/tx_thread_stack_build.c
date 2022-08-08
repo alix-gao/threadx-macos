@@ -21,7 +21,7 @@
 
 #define TX_SOURCE_CODE
 
-/* Include necessary system files.  */
+/* Include necessary system files. */
 #include "tx_api.h"
 #include "tx_thread.h"
 #include <stdio.h>
@@ -35,7 +35,7 @@
 /*                                                           6.1          */
 /*  AUTHOR                                                                */
 /*                                                                        */
-/*    William E. Lamie, Microsoft Corporation                             */
+/*    cheng.gao, thoughtworks Corporation                                 */
 /*                                                                        */
 /*  DESCRIPTION                                                           */
 /*                                                                        */
@@ -59,7 +59,6 @@
 /*  08-07-2022        cheng.gao                Initial Version 6.1        */
 /*                                                                        */
 /**************************************************************************/
-
 void *_tx_linux_thread_entry(void *ptr)
 {
     TX_THREAD  *thread_ptr;

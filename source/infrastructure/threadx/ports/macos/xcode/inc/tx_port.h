@@ -529,7 +529,6 @@ extern CHAR _tx_version_id[];
 /* Define externals for the Linux port of ThreadX.  */
 extern pthread_mutex_t _tx_macos_mutex;
 extern sem_t *_tx_schedule_semaphore;
-extern ULONG                                    _tx_linux_global_int_disabled_flag;
 extern struct timespec                          _tx_linux_time_stamp;
 extern __thread int                             _tx_linux_threadx_thread;
 

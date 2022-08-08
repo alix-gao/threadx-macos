@@ -21,7 +21,7 @@
 
 #define    TX_SOURCE_CODE
 
-/* Include necessary system files.  */
+/* Include necessary system files. */
 #include "tx_api.h"
 #include "tx_thread.h"
 #include "tx_timer.h"
@@ -35,7 +35,7 @@
 /*                                                           6.1          */
 /*  AUTHOR                                                                */
 /*                                                                        */
-/*    William E. Lamie, Microsoft Corporation                             */
+/*    cheng.gao, thoughtworks Corporation                                 */
 /*                                                                        */
 /*  DESCRIPTION                                                           */
 /*                                                                        */

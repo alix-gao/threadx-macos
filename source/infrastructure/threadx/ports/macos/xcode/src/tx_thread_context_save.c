@@ -1,6 +1,6 @@
 /**************************************************************************/
 /*                                                                        */
-/*       Copyright (c) Microsoft Corporation. All rights reserved.        */
+/*       Copyright (c) thoughtworks Corporation. All rights reserved.     */
 /*                                                                        */
 /*       This software is licensed under the Microsoft Software License   */
 /*       Terms for Microsoft Azure RTOS. Full text of the license can be  */
@@ -8,7 +8,6 @@
 /*       and in the root directory of this software.                      */
 /*                                                                        */
 /**************************************************************************/
-
 
 /**************************************************************************/
 /**************************************************************************/
@@ -24,8 +23,7 @@
 #define TX_SOURCE_CODE
 
 
-/* Include necessary system files.  */
-
+/* Include necessary system files. */
 #include "tx_api.h"
 #include "tx_thread.h"
 #include "tx_timer.h"
@@ -39,7 +37,7 @@
 /*                                                           6.1          */
 /*  AUTHOR                                                                */
 /*                                                                        */
-/*    William E. Lamie, Microsoft Corporation                             */
+/*    cheng.gao, thoughtworks Corporation                                 */
 /*                                                                        */
 /*  DESCRIPTION                                                           */
 /*                                                                        */
@@ -47,52 +45,31 @@
 /*    beginning of interrupt processing.  The function also ensures that  */
 /*    the system stack is used upon return to the calling ISR.            */
 /*                                                                        */
-/*  INPUT                                                                 */
-/*                                                                        */
-/*    None                                                                */
-/*                                                                        */
-/*  OUTPUT                                                                */
-/*                                                                        */
-/*    None                                                                */
-/*                                                                        */
-/*  CALLS                                                                 */
-/*                                                                        */
-/*    tx_macos_mutex_lock                                                 */
-/*    _tx_linux_thread_suspend                                            */
-/*    tx_macos_mutex_unlock                                               */
-/*                                                                        */
-/*  CALLED BY                                                             */
-/*                                                                        */
-/*    ISRs                                                                */
-/*                                                                        */
 /*  RELEASE HISTORY                                                       */
 /*                                                                        */
 /*    DATE              NAME                      DESCRIPTION             */
 /*                                                                        */
-/*  09-30-2020     William E. Lamie         Initial Version 6.1           */
+/*  08-07-2022        cheng.gao                Initial Version 6.1        */
 /*                                                                        */
 /**************************************************************************/
-VOID   _tx_thread_context_save(VOID)
+VOID _tx_thread_context_save(VOID)
 {
-    /* Lock mutex to ensure other threads are not playing with
-       the core ThreadX data structures.  */
+    /* Lock mutex to ensure other threads are not playing with the core ThreadX data structures. */
     tx_macos_mutex_lock(_tx_macos_mutex);
 
     /* If an application thread is running, suspend it to simulate preemption. */
-    if ((_tx_thread_current_ptr) && (_tx_thread_system_state == 0))
-    {info("-------------save %s %d", _tx_thread_current_ptr->tx_thread_name, _tx_thread_system_state);
-        /* Yes, this is the first interrupt and an application thread is running...
-           suspend it!  */
+    if ((_tx_thread_current_ptr) && (_tx_thread_system_state == 0)) {
+        info("-------------save %s %d", _tx_thread_current_ptr->tx_thread_name, _tx_thread_system_state);
+        /* Yes, this is the first interrupt and an application thread is running..., suspend it! */
         _tx_linux_thread_suspend(_tx_thread_current_ptr);
 
-        /* Indicate that this thread was suspended asynchronously.  */
-        _tx_thread_current_ptr->tx_thread_linux_suspension_type =  1;
+        /* Indicate that this thread was suspended asynchronously. */
+        _tx_thread_current_ptr->tx_thread_linux_suspension_type = 1;
     }
 
-    /* Increment the nested interrupt condition.  */
+    /* Increment the nested interrupt condition. */
     _tx_thread_system_state++;
 
     /* Unlock linux mutex. */
     tx_macos_mutex_unlock(_tx_macos_mutex);
 }
-

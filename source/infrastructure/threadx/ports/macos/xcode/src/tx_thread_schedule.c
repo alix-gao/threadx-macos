@@ -11,12 +11,13 @@
 
 #define TX_SOURCE_CODE
 
-/* Include necessary system files.  */
+/* Include necessary system files. */
 #include <stdio.h>
 #include <errno.h>
 #include <pthread.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "tx_api.h"
 #include "tx_thread.h"
@@ -55,37 +56,34 @@
 /**************************************************************************/
 VOID _tx_thread_schedule(VOID)
 {
-    int loop;
+    bool wait;
 
-    loop = 0;
-    while (0 == loop) {
+    wait = true;
+    while (true == wait) {
         info("_tx_thread_schedule\n");
 
         tx_macos_sem_wait(_tx_schedule_semaphore);
 
         tx_macos_mutex_lock(_tx_macos_mutex);
 
-        if ((NULL == _tx_thread_execute_ptr)
-         || (!pthread_main_np() && !pthread_equal(_tx_thread_execute_ptr->tx_macos_thread_id, pthread_self()))) {
-            tx_macos_mutex_unlock(_tx_macos_mutex);
-            continue;
+        if ((NULL != _tx_thread_execute_ptr)
+         && (pthread_main_np() || pthread_equal(_tx_thread_execute_ptr->tx_macos_thread_id, pthread_self()))) {
+            /* Yes! We have a thread to execute.
+            Note that the critical section is already active from the scheduling loop above. */
+
+            /* Setup the current thread pointer. */
+            _tx_thread_current_ptr = _tx_thread_execute_ptr;
+
+            info("schedule result %s\n", _tx_thread_current_ptr->tx_thread_name);
+
+            /* Increment the run count for this thread. */
+            _tx_thread_current_ptr->tx_thread_run_count++;
+
+            /* Setup time-slice, if present. */
+            _tx_timer_time_slice = _tx_thread_current_ptr->tx_thread_time_slice;
+
+            wait = !pthread_equal(_tx_thread_current_ptr->tx_macos_thread_id, pthread_self());
         }
-
-        /* Yes! We have a thread to execute.
-           Note that the critical section is already active from the scheduling loop above. */
-
-        /* Setup the current thread pointer. */
-        _tx_thread_current_ptr = _tx_thread_execute_ptr;
-
-        info("schedule result %s\n", _tx_thread_current_ptr->tx_thread_name);
-
-        /* Increment the run count for this thread. */
-        _tx_thread_current_ptr->tx_thread_run_count++;
-
-        /* Setup time-slice, if present. */
-        _tx_timer_time_slice = _tx_thread_current_ptr->tx_thread_time_slice;
-
-        loop = pthread_equal(_tx_thread_current_ptr->tx_macos_thread_id, pthread_self());
 
         /* Unlock linux mutex. */
         tx_macos_mutex_unlock(_tx_macos_mutex);

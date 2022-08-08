@@ -21,7 +21,7 @@
 
 #define TX_SOURCE_CODE
 
-/* Include necessary system files.  */
+/* Include necessary system files. */
 #include "tx_api.h"
 #include "tx_timer.h"
 #include "tx_thread.h"
