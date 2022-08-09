@@ -22,10 +22,13 @@
 #define    TX_SOURCE_CODE
 
 /* Include necessary system files. */
+#include <stdio.h>
+#include <assert.h>
+#include <stdbool.h>
+
 #include "tx_api.h"
 #include "tx_thread.h"
 #include "tx_timer.h"
-#include <stdio.h>
 
 /**************************************************************************/
 /*                                                                        */
@@ -85,7 +88,11 @@ VOID _tx_thread_system_return(VOID)
         ((!temp_thread_ptr) || (!pthread_equal(temp_thread_ptr->tx_macos_thread_id, thread_id)))) {
         /* This indicates the Linux thread was actually terminated by ThreadX is only being allowed to run in order to cleanup its resources. */
         tx_linux_mutex_recursive_unlock(_tx_macos_mutex);
+        printf("pthread exit %p\n", temp_thread_ptr);
+        dump_callstack();
+        assert(false);
         pthread_exit((void *) &exit_code);
+        exit(0);
     }
 
     /* Determine if the time-slice is active. */

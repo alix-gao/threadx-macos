@@ -89,5 +89,5 @@ VOID _tx_thread_context_restore(VOID)
      /* Just return back to the scheduler!  */
 
     /* Unlock linux mutex. */
-    tx_linux_mutex_recursive_unlock(_tx_macos_mutex);
+    tx_macos_mutex_unlock(_tx_macos_mutex);
 }
