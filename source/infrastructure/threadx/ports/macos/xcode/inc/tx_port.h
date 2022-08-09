@@ -25,7 +25,7 @@
 /*                                                                        */
 /*  PORT SPECIFIC C INFORMATION                            RELEASE        */
 /*                                                                        */
-/*    tx_port.h                                           Linux/GNU       */
+/*    tx_port.h                                           macos/GNU       */
 /*                                                           6.1.11       */
 /*                                                                        */
 /*  AUTHOR                                                                */
@@ -292,7 +292,7 @@ extern TEST_FLAG        test_forced_mutex_timeout;
    if TX_TIMER_PROCESS_IN_ISR is not defined.  */
 
 #ifndef TX_TIMER_THREAD_STACK_SIZE
-#define TX_TIMER_THREAD_STACK_SIZE              400         /* Default timer thread stack size - Not used in Linux port!  */
+#define TX_TIMER_THREAD_STACK_SIZE              400         /* Default timer thread stack size - Not used in macos port!  */
 #endif
 
 #ifndef TX_TIMER_THREAD_PRIORITY
@@ -317,7 +317,7 @@ extern TEST_FLAG        test_forced_mutex_timeout;
 
 #ifndef TX_MISRA_ENABLE
 #ifndef TX_TRACE_TIME_SOURCE
-#define TX_TRACE_TIME_SOURCE                    ((ULONG) (_tx_linux_time_stamp.tv_nsec));
+#define TX_TRACE_TIME_SOURCE                    ((ULONG) (_tx_macos_time_stamp.tv_nsec));
 #endif
 #else
 ULONG   _tx_misra_time_stamp_get(VOID);
@@ -331,7 +331,7 @@ ULONG   _tx_misra_time_stamp_get(VOID);
 
 /* Define the port-specific trace extension to pickup the Windows timer.  */
 
-#define TX_TRACE_PORT_EXTENSION                 clock_gettime(CLOCK_REALTIME, &_tx_linux_time_stamp);
+#define TX_TRACE_PORT_EXTENSION                 clock_gettime(CLOCK_REALTIME, &_tx_macos_time_stamp);
 
 
 /* Define the port specific options for the _tx_build_options variable. This variable indicates
@@ -351,7 +351,7 @@ ULONG   _tx_misra_time_stamp_get(VOID);
 #endif
 
 
-/* Define the Linux-specific initialization code that is expanded in the generic source.  */
+/* Define the macos-specific initialization code that is expanded in the generic source.  */
 
 void    _tx_initialize_start_interrupts(void);
 
@@ -376,9 +376,9 @@ void    _tx_initialize_start_interrupts(void);
    existing ThreadX kernel awareness modules.  */
 
 #define TX_THREAD_EXTENSION_0                                               pthread_t   tx_macos_thread_id; \
-                                                                            sem_t       *tx_thread_linux_thread_run_semaphore; \
-                                                                            UINT        tx_thread_linux_suspension_type; \
-                                                                            UINT        tx_thread_linux_int_disabled_flag;
+                                                                            sem_t       *tx_thread_macos_thread_run_semaphore; \
+                                                                            UINT        tx_thread_macos_suspension_type; \
+                                                                            UINT        tx_thread_macos_int_disabled_flag;
 
 #define TX_THREAD_EXTENSION_1                                               UINT       tx_macos_thread_suspend;
 #define TX_THREAD_EXTENSION_2
@@ -437,12 +437,12 @@ void    _tx_initialize_start_interrupts(void);
 
 struct TX_THREAD_STRUCT;
 
-/* Define post completion processing for tx_thread_delete, so that the Linux thread resources are properly removed.  */
+/* Define post completion processing for tx_thread_delete, so that the macos thread resources are properly removed.  */
 
 void _tx_thread_delete_port_completion(struct TX_THREAD_STRUCT *thread_ptr, UINT tx_saved_posture);
 #define TX_THREAD_DELETE_PORT_COMPLETION(thread_ptr) _tx_thread_delete_port_completion(thread_ptr, tx_saved_posture);
 
-/* Define post completion processing for tx_thread_reset, so that the Linux thread resources are properly removed.  */
+/* Define post completion processing for tx_thread_reset, so that the macos thread resources are properly removed.  */
 
 void _tx_thread_reset_port_completion(struct TX_THREAD_STRUCT *thread_ptr, UINT tx_saved_posture);
 #define TX_THREAD_RESET_PORT_COMPLETION(thread_ptr) _tx_thread_reset_port_completion(thread_ptr, tx_saved_posture);
@@ -494,17 +494,17 @@ VOID   _tx_thread_interrupt_restore(UINT previous_posture);
 
 #define tx_macos_mutex_lock(p)              pthread_mutex_lock(&p)
 #define tx_macos_mutex_unlock(p)            pthread_mutex_unlock(&p)
-#define tx_linux_mutex_recursive_unlock(p) \
+#define tx_macos_mutex_recursive_unlock(p) \
     do {\
         if (EPERM == pthread_mutex_unlock(&p)) { \
             break; \
         } \
     } while (1)
 
-#define tx_linux_sem_post(p)                tx_macos_mutex_lock(_tx_macos_mutex);\
+#define tx_macos_sem_post(p)                tx_macos_mutex_lock(_tx_macos_mutex);\
                                             sem_post(p);\
                                             tx_macos_mutex_unlock(_tx_macos_mutex)
-#define tx_linux_sem_post_nolock(p)         sem_post(p)
+#define tx_macos_sem_post_nolock(p)         sem_post(p)
 #define tx_macos_sem_wait(p)                sem_wait(p)
 
 
@@ -526,25 +526,25 @@ extern CHAR _tx_version_id[];
 #endif
 
 
-/* Define externals for the Linux port of ThreadX.  */
+/* Define externals for the macos port of ThreadX.  */
 extern pthread_mutex_t _tx_macos_mutex;
 extern sem_t *_tx_schedule_semaphore;
-extern struct timespec                          _tx_linux_time_stamp;
-extern __thread int                             _tx_linux_threadx_thread;
+extern struct timespec                          _tx_macos_time_stamp;
+extern __thread int                             _tx_macos_threadx_thread;
 
-/* Define functions for linux thread. */
-void    _tx_linux_thread_suspend(struct TX_THREAD_STRUCT *thread);
-void    _tx_linux_thread_resume(struct TX_THREAD_STRUCT *thread);
-void    _tx_linux_thread_init();
+/* Define functions for macos thread. */
+void    _tx_macos_thread_suspend(struct TX_THREAD_STRUCT *thread);
+void    _tx_macos_thread_resume(struct TX_THREAD_STRUCT *thread);
+void    _tx_macos_thread_init();
 
-#ifndef TX_LINUX_MEMORY_SIZE
-#define TX_LINUX_MEMORY_SIZE                    64000
+#ifndef TX_MACOS_MEMORY_SIZE
+#define TX_MACOS_MEMORY_SIZE                    64000
 #endif
 
 /* Define priorities of pthreads. */
-#define TX_LINUX_PRIORITY_SCHEDULE    (3)
-#define TX_LINUX_PRIORITY_ISR         (2)
-#define TX_LINUX_PRIORITY_USER_THREAD (1)
+#define TX_MACOS_PRIORITY_SCHEDULE    (3)
+#define TX_MACOS_PRIORITY_ISR         (2)
+#define TX_MACOS_PRIORITY_USER_THREAD (1)
 
 #include <stdio.h>
 #include <pthread.h>

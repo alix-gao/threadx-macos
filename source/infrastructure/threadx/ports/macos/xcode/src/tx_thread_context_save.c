@@ -33,7 +33,7 @@
 /*                                                                        */
 /*  FUNCTION                                               RELEASE        */
 /*                                                                        */
-/*    _tx_thread_context_save                             Linux/GNU       */
+/*    _tx_thread_context_save                             macos/GNU       */
 /*                                                           6.1          */
 /*  AUTHOR                                                                */
 /*                                                                        */
@@ -61,15 +61,15 @@ VOID _tx_thread_context_save(VOID)
     if ((_tx_thread_current_ptr) && (_tx_thread_system_state == 0)) {
         info("-------------save %s %d", _tx_thread_current_ptr->tx_thread_name, _tx_thread_system_state);
         /* Yes, this is the first interrupt and an application thread is running..., suspend it! */
-        _tx_linux_thread_suspend(_tx_thread_current_ptr);
+        _tx_macos_thread_suspend(_tx_thread_current_ptr);
 
         /* Indicate that this thread was suspended asynchronously. */
-        _tx_thread_current_ptr->tx_thread_linux_suspension_type = 1;
+        _tx_thread_current_ptr->tx_thread_macos_suspension_type = 1;
     }
 
     /* Increment the nested interrupt condition. */
     _tx_thread_system_state++;
 
-    /* Unlock linux mutex. */
+    /* Unlock macos mutex. */
     tx_macos_mutex_unlock(_tx_macos_mutex);
 }

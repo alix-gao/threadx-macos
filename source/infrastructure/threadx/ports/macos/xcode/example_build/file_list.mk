@@ -1,4 +1,4 @@
-LINUX_SRCS = \
+MACOS_SRCS = \
 tx_initialize_low_level.c \
 tx_thread_context_restore.c \
 tx_thread_context_save.c \
@@ -8,7 +8,7 @@ tx_thread_stack_build.c \
 tx_thread_system_return.c \
 tx_timer_interrupt.c \
 
-LINUX_OBJS = $(LINUX_SRCS:%.c=.tmp/%.o)
+MACOS_OBJS = $(MACOS_SRCS:%.c=.tmp/%.o)
 
 
 GENERIC_SRCS = \

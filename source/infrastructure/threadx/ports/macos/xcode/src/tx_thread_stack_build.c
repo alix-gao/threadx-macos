@@ -31,7 +31,7 @@
 /*                                                                        */
 /*  FUNCTION                                               RELEASE        */
 /*                                                                        */
-/*    _tx_thread_stack_build                              Linux/GNU       */
+/*    _tx_thread_stack_build                              macos/GNU       */
 /*                                                           6.1          */
 /*  AUTHOR                                                                */
 /*                                                                        */
@@ -59,13 +59,13 @@
 /*  08-07-2022        cheng.gao                Initial Version 6.1        */
 /*                                                                        */
 /**************************************************************************/
-void *_tx_linux_thread_entry(void *ptr)
+void *_tx_macos_thread_entry(void *ptr)
 {
     TX_THREAD  *thread_ptr;
 
     /* Pickup the current thread pointer. */
     thread_ptr =  (TX_THREAD *) ptr;
-    _tx_linux_threadx_thread = 1;
+    _tx_macos_threadx_thread = 1;
     nice(20);
 
     info("%s %lx entry\n", thread_ptr->tx_thread_name, pthread_self());
@@ -80,7 +80,7 @@ void *_tx_linux_thread_entry(void *ptr)
     /* Now suspend the thread initially.
        If the thread has already been scheduled, this will return immediately. */
     thread_ptr->tx_macos_thread_suspend = 0;
-    _tx_linux_thread_suspend(thread_ptr);
+    _tx_macos_thread_suspend(thread_ptr);
     info("%s entry go\n", thread_ptr->tx_thread_name);
     /* Call ThreadX thread entry point. */
     _tx_thread_shell_entry();
@@ -97,18 +97,18 @@ VOID _tx_thread_stack_build(TX_THREAD *thread_ptr, VOID (*function_ptr)(VOID))
     /* Create the run semaphore for the thread.
        This will allow the scheduler control over when the thread actually runs. */
     sem_unlink(thread_ptr->tx_thread_name);
-    thread_ptr->tx_thread_linux_thread_run_semaphore = sem_open(thread_ptr->tx_thread_name, O_CREAT, 0666, 0);
-    if (SEM_FAILED == thread_ptr->tx_thread_linux_thread_run_semaphore) {
+    thread_ptr->tx_thread_macos_thread_run_semaphore = sem_open(thread_ptr->tx_thread_name, O_CREAT, 0666, 0);
+    if (SEM_FAILED == thread_ptr->tx_thread_macos_thread_run_semaphore) {
         /* Display an error message. */
-        info("ThreadX Linux error creating thread running semaphore! %s, \n", thread_ptr->tx_thread_name);
+        info("ThreadX macos error creating thread running semaphore! %s, \n", thread_ptr->tx_thread_name);
         while (1) {
         }
     }
 
-    /* Create a Linux thread for the application thread. */
-    if (pthread_create(&thread_ptr->tx_macos_thread_id, NULL, _tx_linux_thread_entry, thread_ptr)) {
+    /* Create a macos thread for the application thread. */
+    if (pthread_create(&thread_ptr->tx_macos_thread_id, NULL, _tx_macos_thread_entry, thread_ptr)) {
         /* Display an error message. */
-        info("ThreadX Linux error creating thread!\n");
+        info("ThreadX macos error creating thread!\n");
         while (1) {
         }
     }
@@ -116,15 +116,15 @@ VOID _tx_thread_stack_build(TX_THREAD *thread_ptr, VOID (*function_ptr)(VOID))
     info("create id %lx", thread_ptr->tx_macos_thread_id);
 
     /* Otherwise, we have a good thread create. */
-    sp.sched_priority = TX_LINUX_PRIORITY_USER_THREAD;
+    sp.sched_priority = TX_MACOS_PRIORITY_USER_THREAD;
     pthread_setschedparam(thread_ptr->tx_macos_thread_id, SCHED_FIFO, &sp);
 
     /* Setup the thread suspension type to solicited thread suspension.
        Pseudo interrupt handlers will suspend with this field set to 1. */
-    thread_ptr->tx_thread_linux_suspension_type = 0;
+    thread_ptr->tx_thread_macos_suspension_type = 0;
 
     /* Clear the disabled count that will keep track of the tx_interrupt_control nesting. */
-    thread_ptr->tx_thread_linux_int_disabled_flag =  0;
+    thread_ptr->tx_thread_macos_int_disabled_flag =  0;
 
     /* Setup a fake thread stack pointer. */
     thread_ptr->tx_thread_stack_ptr = (VOID *)(((CHAR *) thread_ptr->tx_thread_stack_end) - 8);

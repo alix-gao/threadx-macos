@@ -85,30 +85,30 @@ VOID _tx_thread_schedule(VOID)
             wait = !pthread_equal(_tx_thread_current_ptr->tx_macos_thread_id, pthread_self());
         }
 
-        /* Unlock linux mutex. */
+        /* Unlock macos mutex. */
         tx_macos_mutex_unlock(_tx_macos_mutex);
     }
 }
 
 void _tx_thread_delete_port_completion(TX_THREAD *thread_ptr, UINT tx_saved_posture)
 {
-    INT             linux_status;
+    INT             macos_status;
     sem_t           *threadrunsemaphore;
     pthread_t       thread_id;
     struct          timespec ts;
 
     thread_id = thread_ptr->tx_macos_thread_id;
-    threadrunsemaphore = thread_ptr->tx_thread_linux_thread_run_semaphore;
+    threadrunsemaphore = thread_ptr->tx_thread_macos_thread_run_semaphore;
     ts.tv_sec = 0;
     ts.tv_nsec = 1000000;
     TX_RESTORE
     do {
-        linux_status = pthread_cancel(thread_id);
-        if (linux_status != EAGAIN) {
+        macos_status = pthread_cancel(thread_id);
+        if (macos_status != EAGAIN) {
             break;
         }
-        _tx_linux_thread_resume(thread_ptr);
-        tx_linux_sem_post(threadrunsemaphore);
+        _tx_macos_thread_resume(thread_ptr);
+        tx_macos_sem_post(threadrunsemaphore);
         nanosleep(&ts, &ts);
     } while (1);
     pthread_join(thread_id, NULL);
@@ -119,23 +119,23 @@ void _tx_thread_delete_port_completion(TX_THREAD *thread_ptr, UINT tx_saved_post
 
 void _tx_thread_reset_port_completion(TX_THREAD *thread_ptr, UINT tx_saved_posture)
 {
-    INT linux_status;
+    INT macos_status;
     sem_t *threadrunsemaphore;
     pthread_t thread_id;
     struct timespec ts;
 
     thread_id = thread_ptr->tx_macos_thread_id;
-    threadrunsemaphore = thread_ptr->tx_thread_linux_thread_run_semaphore;
+    threadrunsemaphore = thread_ptr->tx_thread_macos_thread_run_semaphore;
     ts.tv_sec = 0;
     ts.tv_nsec = 1000000;
     TX_RESTORE
     do {
-        linux_status = pthread_cancel(thread_id);
-        if (linux_status != EAGAIN) {
+        macos_status = pthread_cancel(thread_id);
+        if (macos_status != EAGAIN) {
             break;
         }
-        _tx_linux_thread_resume(thread_ptr);
-        tx_linux_sem_post(threadrunsemaphore);
+        _tx_macos_thread_resume(thread_ptr);
+        tx_macos_sem_post(threadrunsemaphore);
         nanosleep(&ts, &ts);
     } while (1);
     pthread_join(thread_id, NULL);

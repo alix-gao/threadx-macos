@@ -1,8 +1,8 @@
 CC = gcc
 AR=ar cr
-DEFINES = -DTX_LINUX_DEBUG_ENABLE -D_GNU_SOURCE -DTX_ENABLE_EVENT_TRACE
+DEFINES = -DTX_MACOS_DEBUG_ENABLE -D_GNU_SOURCE -DTX_ENABLE_EVENT_TRACE
 ifdef NO_IDLE
-DEFINES += -DTX_LINUX_NO_IDLE_ENABLE
+DEFINES += -DTX_MACOS_NO_IDLE_ENABLE
 TITLE = "No idle"
 else
 TITLE = "TX"
@@ -36,12 +36,12 @@ sample_threadx: $(OUTPUT_FOLDER)/sample_threadx.o tx.a
 	echo LD $@
 	$(LINK) -o $@ $^ $(LIBS)
 
-tx.a: $(OUTPUT_FOLDER) $(LINUX_OBJS) $(GENERIC_OBJS)
+tx.a: $(OUTPUT_FOLDER) $(MACOS_OBJS) $(GENERIC_OBJS)
 	echo AR $@
-	$(AR) $@ $(LINUX_OBJS) $(GENERIC_OBJS)
+	$(AR) $@ $(MACOS_OBJS) $(GENERIC_OBJS)
 
-tx.so: $(OUTPUT_FOLDER) $(LINUX_OBJS) $(GENERIC_OBJS)
-	cc -fPIC -shared -Wl,-soname,$@ -o $@ $(LINUX_OBJS) $(GENERIC_OBJS) $(LIBS) $(ARCH)
+tx.so: $(OUTPUT_FOLDER) $(MACOS_OBJS) $(GENERIC_OBJS)
+	cc -fPIC -shared -Wl,-soname,$@ -o $@ $(MACOS_OBJS) $(GENERIC_OBJS) $(LIBS) $(ARCH)
 
 $(OUTPUT_FOLDER)/sample_threadx.o: sample_threadx.c $(DIR)/Makefile
 	filename=`basename $<`; \
@@ -63,14 +63,14 @@ $(OUTPUT_FOLDER)/generic/%.o: $(COMMON_PATH)/src/%.c $(DIR)/Makefile
 .SILENT:
 .PHONY: files clean
 files:
-	@echo "LINUX_SRCS = \\" > $(FILE_LIST);
+	@echo "MACOS_SRCS = \\" > $(FILE_LIST);
 	-@for file in *.c; \
 	do \
 		filename=`basename $$file`; \
 		[ "$$file" == "sample_threadx.c" ] || echo "$$filename \\" >> $(FILE_LIST); \
 	done;
 	@printf "\n" >> $(FILE_LIST);
-	@echo 'LINUX_OBJS = $$(LINUX_SRCS:%.c=$(OUTPUT_FOLDER)/%.o)' >> $(FILE_LIST);
+	@echo 'MACOS_OBJS = $$(MACOS_SRCS:%.c=$(OUTPUT_FOLDER)/%.o)' >> $(FILE_LIST);
 	@printf "\n\n" >> $(FILE_LIST);
 	@echo "GENERIC_SRCS = \\" >> $(FILE_LIST);
 	-@for file in $(COMMON_PATH)/src/*.c; \

@@ -34,7 +34,7 @@
 /*                                                                        */
 /*  FUNCTION                                               RELEASE        */
 /*                                                                        */
-/*    _tx_thread_system_return                            Linux/GNU       */
+/*    _tx_thread_system_return                            macos/GNU       */
 /*                                                           6.1          */
 /*  AUTHOR                                                                */
 /*                                                                        */
@@ -72,7 +72,7 @@ VOID _tx_thread_system_return(VOID)
 
     info(":::::::::::::::::::::::::::::return %s r1\n", _tx_thread_current_ptr->tx_thread_name);
 
-    /* Lock Linux mutex. */
+    /* Lock macos mutex. */
     tx_macos_mutex_lock(_tx_macos_mutex);
 
     /* First, determine if the thread was terminated. */
@@ -84,10 +84,10 @@ VOID _tx_thread_system_return(VOID)
     temp_thread_ptr = _tx_thread_current_ptr;
 
     /* Determine if this is a thread (0) and it does not match the current thread pointer. */
-    if ((_tx_linux_threadx_thread) &&
+    if ((_tx_macos_threadx_thread) &&
         ((!temp_thread_ptr) || (!pthread_equal(temp_thread_ptr->tx_macos_thread_id, thread_id)))) {
-        /* This indicates the Linux thread was actually terminated by ThreadX is only being allowed to run in order to cleanup its resources. */
-        tx_linux_mutex_recursive_unlock(_tx_macos_mutex);
+        /* This indicates the macos thread was actually terminated by ThreadX is only being allowed to run in order to cleanup its resources. */
+        tx_macos_mutex_recursive_unlock(_tx_macos_mutex);
         printf("pthread exit %p\n", temp_thread_ptr);
         dump_callstack();
         assert(false);
@@ -103,19 +103,19 @@ VOID _tx_thread_system_return(VOID)
     }
 
     /* Save the run semaphore into a temporary variable as well. */
-    temp_run_semaphore = temp_thread_ptr->tx_thread_linux_thread_run_semaphore;
+    temp_run_semaphore = temp_thread_ptr->tx_thread_macos_thread_run_semaphore;
 
     /* Pickup the current thread state. */
     temp_thread_state = temp_thread_ptr->tx_thread_state;
 
     /* Setup the suspension type for this thread. */
-    temp_thread_ptr->tx_thread_linux_suspension_type = 0;
+    temp_thread_ptr->tx_thread_macos_suspension_type = 0;
 
     /* Set the current thread pointer to NULL. */
     _tx_thread_current_ptr = TX_NULL;
 
-    /* Unlock Linux mutex. */
-    tx_linux_mutex_recursive_unlock(_tx_macos_mutex);
+    /* Unlock macos mutex. */
+    tx_macos_mutex_recursive_unlock(_tx_macos_mutex);
 
     _tx_thread_schedule();
 }

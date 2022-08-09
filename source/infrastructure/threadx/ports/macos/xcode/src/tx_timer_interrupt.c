@@ -30,7 +30,7 @@
 /*                                                                        */
 /*  FUNCTION                                               RELEASE        */
 /*                                                                        */
-/*    _tx_timer_interrupt                                 Linux/GNU       */
+/*    _tx_timer_interrupt                                 macos/GNU       */
 /*                                                           6.1          */
 /*  AUTHOR                                                                */
 /*                                                                        */
@@ -109,6 +109,6 @@ VOID _tx_timer_interrupt(VOID)
         }
     }
 
-    /* Unlock linux mutex. */
+    /* Unlock macos mutex. */
     tx_macos_mutex_unlock(_tx_macos_mutex);
 }

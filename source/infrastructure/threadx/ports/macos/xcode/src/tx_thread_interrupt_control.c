@@ -29,7 +29,7 @@
 /*                                                                        */
 /*  FUNCTION                                               RELEASE        */
 /*                                                                        */
-/*    _tx_thread_interrupt_control                        Linux/GNU       */
+/*    _tx_thread_interrupt_control                        macos/GNU       */
 /*                                                           6.1          */
 /*  AUTHOR                                                                */
 /*                                                                        */
@@ -68,7 +68,7 @@ UINT _tx_thread_interrupt_control(UINT new_posture)
     pthread_t thread_id;
     int exit_code = 0;
 
-    /* Lock Linux mutex. */
+    /* Lock macos mutex. */
     tx_macos_mutex_lock(_tx_macos_mutex);
 
     /* Pickup the id of the current thread. */
@@ -78,13 +78,13 @@ UINT _tx_thread_interrupt_control(UINT new_posture)
     thread_ptr = _tx_thread_current_ptr;
 
     /* Determine if this is a thread and it does not match the current thread pointer. */
-    if ((_tx_linux_threadx_thread)
+    if ((_tx_macos_threadx_thread)
      && ((!thread_ptr) || (!pthread_equal(thread_ptr->tx_macos_thread_id, thread_id)))) {
         printf("pthread exit %p\n", thread_ptr);
         dump_callstack();
-        /* This indicates the Linux thread was actually terminated by ThreadX is only being allowed to run in order to cleanup its resources. */
-        /* Unlock linux mutex. */
-        tx_linux_mutex_recursive_unlock(_tx_macos_mutex);
+        /* This indicates the macos thread was actually terminated by ThreadX is only being allowed to run in order to cleanup its resources. */
+        /* Unlock macos mutex. */
+        tx_macos_mutex_recursive_unlock(_tx_macos_mutex);
 
         pthread_exit((void *) &exit_code);
     }
@@ -103,9 +103,6 @@ UINT _tx_thread_interrupt_control(UINT new_posture)
         /* Determine how to apply the new posture. */
         if (new_posture == TX_INT_ENABLE) {
             pic_status++;
-
-            /* Determine if the critical section is locked. */
-            tx_linux_mutex_recursive_unlock(_tx_macos_mutex);
         } else if (new_posture == TX_INT_DISABLE) {
             pic_status--;
         }
@@ -115,17 +112,16 @@ UINT _tx_thread_interrupt_control(UINT new_posture)
             pic_status++;
 
             /* Clear the disabled flag. */
-            _tx_thread_current_ptr->tx_thread_linux_int_disabled_flag = TX_FALSE;
-
-            /* Determine if the critical section is locked. */
-            tx_linux_mutex_recursive_unlock(_tx_macos_mutex);
+            _tx_thread_current_ptr->tx_thread_macos_int_disabled_flag = TX_FALSE;
         } else if (new_posture == TX_INT_DISABLE) {
             pic_status--;
 
             /* Set the disabled flag. */
-            _tx_thread_current_ptr->tx_thread_linux_int_disabled_flag = TX_TRUE;
+            _tx_thread_current_ptr->tx_thread_macos_int_disabled_flag = TX_TRUE;
         }
     }
+
+    tx_macos_mutex_unlock(_tx_macos_mutex);
 
     /* Return the previous interrupt disable posture. */
     return (old_posture);

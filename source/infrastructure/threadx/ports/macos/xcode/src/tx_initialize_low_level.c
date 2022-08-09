@@ -30,31 +30,31 @@
 
 #include "tx_api.h"
 
-/* Define various Linux objects used by the ThreadX port. */
+/* Define various macos objects used by the ThreadX port. */
 
 pthread_mutex_t _tx_macos_mutex;
 sem_t *_tx_schedule_semaphore;
-struct timespec     _tx_linux_time_stamp;
-__thread int        _tx_linux_threadx_thread = 0;
+struct timespec     _tx_macos_time_stamp;
+__thread int        _tx_macos_threadx_thread = 0;
 
-/* Define signals for linux thread. */
+/* Define signals for macos thread. */
 #define SUSPEND_SIG SIGUSR1
 #define RESUME_SIG SIGUSR2
 
-static sigset_t     _tx_linux_thread_wait_mask;
-static __thread int _tx_linux_thread_suspended = 0;
-static sem_t        *_tx_linux_thread_timer_wait;
-static sem_t        *_tx_linux_thread_other_wait;
+static sigset_t     _tx_macos_thread_wait_mask;
+static __thread int _tx_macos_thread_suspended = 0;
+static sem_t        *_tx_macos_thread_timer_wait;
+static sem_t        *_tx_macos_thread_other_wait;
 
 /* Define simulated timer interrupt.  This is done inside a thread, which is
    how other interrupts may be defined as well.  See code below for an
    example.  */
 
-pthread_t           _tx_linux_timer_id;
-pthread_cond_t _tx_linux_timer_cond;
-pthread_mutex_t _tx_linux_timer_mutex;
-sem_t               *_tx_linux_isr_semaphore;
-void               *_tx_linux_timer_interrupt(void *p);
+pthread_t           _tx_macos_timer_id;
+pthread_cond_t _tx_macos_timer_cond;
+pthread_mutex_t _tx_macos_timer_mutex;
+sem_t               *_tx_macos_isr_semaphore;
+void               *_tx_macos_timer_interrupt(void *p);
 
 /* Define the ThreadX timer interrupt handler. */
 void _tx_timer_interrupt(void);
@@ -72,7 +72,7 @@ extern VOID *_tx_initialize_unused_memory;
 /*                                                                        */
 /*  FUNCTION                                               RELEASE        */
 /*                                                                        */
-/*    _tx_initialize_low_level                            Linux/GNU       */
+/*    _tx_initialize_low_level                            macos/GNU       */
 /*                                                           6.1          */
 /*  AUTHOR                                                                */
 /*                                                                        */
@@ -101,13 +101,13 @@ VOID _tx_initialize_low_level(VOID)
     /* Pickup the first available memory address. */
 
     /* Save the first available memory address. */
-    _tx_initialize_unused_memory = malloc(TX_LINUX_MEMORY_SIZE);
+    _tx_initialize_unused_memory = malloc(TX_MACOS_MEMORY_SIZE);
 
-    /* Init Linux thread. */
-    _tx_linux_thread_init();
+    /* Init macos thread. */
+    _tx_macos_thread_init();
 
     /* Set priority and schedual of main thread. */
-    sp.sched_priority = TX_LINUX_PRIORITY_SCHEDULE;
+    sp.sched_priority = TX_MACOS_PRIORITY_SCHEDULE;
     pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp);
 
     /* Create the system critical section.
@@ -119,25 +119,25 @@ VOID _tx_initialize_low_level(VOID)
     _tx_schedule_semaphore = sem_open("_tx_schedule_semaphore", O_CREAT, 0666, 0);
 
     /* Create semaphore for timer thread. */
-    pthread_mutex_init(&_tx_linux_timer_mutex, NULL);
-    pthread_cond_init(&_tx_linux_timer_cond, NULL);
+    pthread_mutex_init(&_tx_macos_timer_mutex, NULL);
+    pthread_cond_init(&_tx_macos_timer_cond, NULL);
 
     /* Create semaphore for ISR thread. */
-    sem_unlink("_tx_linux_isr_semaphore");
-    _tx_linux_isr_semaphore = sem_open("_tx_linux_isr_semaphore", O_CREAT, 0666, 0);
+    sem_unlink("_tx_macos_isr_semaphore");
+    _tx_macos_isr_semaphore = sem_open("_tx_macos_isr_semaphore", O_CREAT, 0666, 0);
 
     /* Setup periodic timer interrupt. */
-    if (pthread_create(&_tx_linux_timer_id, NULL, _tx_linux_timer_interrupt, NULL)) {
+    if (pthread_create(&_tx_macos_timer_id, NULL, _tx_macos_timer_interrupt, NULL)) {
         /* Error creating the timer interrupt. */
-        info("ThreadX Linux error creating timer interrupt thread!\n");
+        info("ThreadX macos error creating timer interrupt thread!\n");
         while (1) {
         }
     }
 
     /* Otherwise, we have a good thread create.
        Now set the priority to a level lower than the system thread but higher than the application threads. */
-    sp.sched_priority = TX_LINUX_PRIORITY_ISR;
-    pthread_setschedparam(_tx_linux_timer_id, SCHED_FIFO, &sp);
+    sp.sched_priority = TX_MACOS_PRIORITY_ISR;
+    pthread_setschedparam(_tx_macos_timer_id, SCHED_FIFO, &sp);
 
     /* Done, return to caller. */
 }
@@ -146,16 +146,16 @@ VOID _tx_initialize_low_level(VOID)
 void _tx_initialize_start_interrupts(void)
 {
     /* Kick the timer thread off to generate the ThreadX periodic interrupt source. */
-    pthread_mutex_lock(&_tx_linux_timer_mutex);
-    pthread_cond_signal(&_tx_linux_timer_cond);
-    pthread_mutex_unlock(&_tx_linux_timer_mutex);
+    pthread_mutex_lock(&_tx_macos_timer_mutex);
+    pthread_cond_signal(&_tx_macos_timer_cond);
+    pthread_mutex_unlock(&_tx_macos_timer_mutex);
 }
 
 /* Define the ThreadX system timer interrupt.
    Other interrupts may be simulated in a similar way. */
 #include <sys/time.h>
 
-void *_tx_linux_timer_interrupt(void *p)
+void *_tx_macos_timer_interrupt(void *p)
 {
     struct timespec ts;
     long timer_periodic_nsec;
@@ -170,9 +170,9 @@ void *_tx_linux_timer_interrupt(void *p)
     info("timer interrupt thread\n");
 
     /* Wait startup semaphore. */
-    pthread_mutex_lock(&_tx_linux_timer_mutex);
-    pthread_cond_wait(&_tx_linux_timer_cond, &_tx_linux_timer_mutex);
-    pthread_mutex_unlock(&_tx_linux_timer_mutex);
+    pthread_mutex_lock(&_tx_macos_timer_mutex);
+    pthread_cond_wait(&_tx_macos_timer_cond, &_tx_macos_timer_mutex);
+    pthread_mutex_unlock(&_tx_macos_timer_mutex);
 
     while (1) {
         static int tick = 0;
@@ -185,11 +185,11 @@ info("::::::::timer loop:::::::::: %d", tick++);
             ts.tv_sec++;
         }
         do {
-            pthread_mutex_lock(&_tx_linux_timer_mutex);
+            pthread_mutex_lock(&_tx_macos_timer_mutex);
             errno = 0;
-            result = pthread_cond_timedwait(&_tx_linux_timer_cond, &_tx_linux_timer_mutex, &ts);
+            result = pthread_cond_timedwait(&_tx_macos_timer_cond, &_tx_macos_timer_mutex, &ts);
             err = errno;
-            pthread_mutex_unlock(&_tx_linux_timer_mutex);
+            pthread_mutex_unlock(&_tx_macos_timer_mutex);
             if (0 == result) {
                 break;
             }
@@ -204,7 +204,7 @@ info(":::::time end....333..");
 info(":::::::timer proc start");
         /* Call the ThreadX system timer interrupt processing. */
         _tx_timer_interrupt();
-        tx_linux_sem_post_nolock(_tx_schedule_semaphore);
+        tx_macos_sem_post_nolock(_tx_schedule_semaphore);
 
 info(":::::::timer proc end");
         /* Call trace ISR exit event insert. */
@@ -216,29 +216,29 @@ info(":::::::timer proc end");
     }
 }
 
-/* Define functions for linux thread. */
-void _tx_linux_thread_resume_handler(int sig)
+/* Define functions for macos thread. */
+void _tx_macos_thread_resume_handler(int sig)
 {
     (VOID) sig;
 }
 
-void _tx_linux_thread_suspend_handler(int sig)
+void _tx_macos_thread_suspend_handler(int sig)
 {
     (VOID) sig;
-info("suspend handler, %d %lx %lx", pthread_equal(pthread_self(), _tx_linux_timer_id), pthread_self(), _tx_linux_timer_id);
-    if (pthread_equal(pthread_self(), _tx_linux_timer_id)) {
-        tx_linux_sem_post_nolock(_tx_linux_thread_timer_wait);
+info("suspend handler, %d %lx %lx", pthread_equal(pthread_self(), _tx_macos_timer_id), pthread_self(), _tx_macos_timer_id);
+    if (pthread_equal(pthread_self(), _tx_macos_timer_id)) {
+        tx_macos_sem_post_nolock(_tx_macos_thread_timer_wait);
     } else {
-        tx_linux_sem_post_nolock(_tx_linux_thread_other_wait);
+        tx_macos_sem_post_nolock(_tx_macos_thread_other_wait);
     }
 
 info("===================suspend handler");
-    _tx_linux_thread_suspended = 1;
-    sigsuspend(&_tx_linux_thread_wait_mask);
-    _tx_linux_thread_suspended = 0;
+    _tx_macos_thread_suspended = 1;
+    sigsuspend(&_tx_macos_thread_wait_mask);
+    _tx_macos_thread_suspended = 0;
 }
 
-void _tx_linux_thread_suspend(TX_THREAD *thread)
+void _tx_macos_thread_suspend(TX_THREAD *thread)
 {
     sigset_t set;
     pthread_t thread_id = thread->tx_macos_thread_id;
@@ -259,14 +259,14 @@ void _tx_linux_thread_suspend(TX_THREAD *thread)
         info("thread is pending");
         return;
     }
-info("suspend %d %lx", pthread_equal(thread_id, _tx_linux_timer_id), thread_id);
+info("suspend %d %lx", pthread_equal(thread_id, _tx_macos_timer_id), thread_id);
     thread->tx_macos_thread_suspend = 1;
     /* Send signal. */info("suspend kill");
     pthread_kill(thread_id, SUSPEND_SIG);
     info("suspend killed");
 }
 
-void _tx_linux_thread_resume(TX_THREAD *thread)
+void _tx_macos_thread_resume(TX_THREAD *thread)
 {
 info("resume %lx", thread->tx_macos_thread_id);
 
@@ -277,24 +277,24 @@ info("resume %lx", thread->tx_macos_thread_id);
     thread->tx_macos_thread_suspend = 0;
 }
 
-void _tx_linux_thread_init(void)
+void _tx_macos_thread_init(void)
 {
     struct sigaction sa;
 
-    /* Create semaphore for linux thread. */
-    sem_unlink("_tx_linux_thread_timer_wait");
-    sem_unlink("_tx_linux_thread_other_wait");
-    _tx_linux_thread_timer_wait = sem_open("_tx_linux_thread_timer_wait", O_CREAT, 0666, 0);
-    _tx_linux_thread_other_wait = sem_open("_tx_linux_thread_other_wait", O_CREAT, 0666, 0);
+    /* Create semaphore for macos thread. */
+    sem_unlink("_tx_macos_thread_timer_wait");
+    sem_unlink("_tx_macos_thread_other_wait");
+    _tx_macos_thread_timer_wait = sem_open("_tx_macos_thread_timer_wait", O_CREAT, 0666, 0);
+    _tx_macos_thread_other_wait = sem_open("_tx_macos_thread_other_wait", O_CREAT, 0666, 0);
 
-    sigfillset(&_tx_linux_thread_wait_mask);
-    sigdelset(&_tx_linux_thread_wait_mask, RESUME_SIG);
+    sigfillset(&_tx_macos_thread_wait_mask);
+    sigdelset(&_tx_macos_thread_wait_mask, RESUME_SIG);
 
     sigfillset(&sa.sa_mask);
     sa.sa_flags = 0;
-    sa.sa_handler = _tx_linux_thread_resume_handler;
+    sa.sa_handler = _tx_macos_thread_resume_handler;
     sigaction(RESUME_SIG, &sa, NULL);
 
-    sa.sa_handler = _tx_linux_thread_suspend_handler;
+    sa.sa_handler = _tx_macos_thread_suspend_handler;
     sigaction(SUSPEND_SIG, &sa, NULL);
 }

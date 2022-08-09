@@ -26,18 +26,18 @@
 #include "tx_thread.h"
 #include "tx_timer.h"
 
-extern sem_t *_tx_linux_isr_semaphore;
-UINT _tx_linux_timer_waiting = 0;
+extern sem_t *_tx_macos_isr_semaphore;
+UINT _tx_macos_timer_waiting = 0;
 
 /**************************************************************************/
 /*                                                                        */
 /*  FUNCTION                                               RELEASE        */
 /*                                                                        */
-/*    _tx_thread_context_restore                          Linux/GNU       */
+/*    _tx_thread_context_restore                          macos/GNU       */
 /*                                                           6.1          */
 /*  AUTHOR                                                                */
 /*                                                                        */
-/*    _tx_thread_context_save                             Linux/GNU       */
+/*    _tx_thread_context_save                             macos/GNU       */
 /*                                                                        */
 /*  DESCRIPTION                                                           */
 /*                                                                        */
@@ -71,9 +71,9 @@ VOID _tx_thread_context_restore(VOID)
 
             /* Pickup the saved stack pointer. */
             /* Recover the saved context and return to the point of interrupt. */
-            _tx_linux_thread_resume(_tx_thread_current_ptr);
+            _tx_macos_thread_resume(_tx_thread_current_ptr);
         } else {
-            _tx_linux_thread_suspend(_tx_thread_current_ptr);
+            _tx_macos_thread_suspend(_tx_thread_current_ptr);
 
             /* Save the remaining time-slice and disable it. */
             if (_tx_timer_time_slice) {
@@ -88,6 +88,6 @@ VOID _tx_thread_context_restore(VOID)
 
      /* Just return back to the scheduler!  */
 
-    /* Unlock linux mutex. */
+    /* Unlock macos mutex. */
     tx_macos_mutex_unlock(_tx_macos_mutex);
 }
