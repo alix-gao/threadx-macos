@@ -19,4 +19,4 @@ target_include_directories(${PROJECT_NAME}
     ${CMAKE_CURRENT_LIST_DIR}/inc
 )
 
-target_compile_definitions(${PROJECT_NAME} PUBLIC "-D_GNU_SOURCE -DTX_LINUX_DEBUG_ENABLE")
+target_compile_definitions(${PROJECT_NAME} PUBLIC "-D_GNU_SOURCE -DTX_MACOS_DEBUG_ENABLE")

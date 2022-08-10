@@ -71,7 +71,7 @@ VOID _tx_thread_context_restore(VOID)
 
             /* Pickup the saved stack pointer. */
             /* Recover the saved context and return to the point of interrupt. */
-            _tx_macos_thread_resume(_tx_thread_current_ptr);
+            //_tx_macos_thread_resume(_tx_thread_current_ptr);
         } else {
             _tx_macos_thread_suspend(_tx_thread_current_ptr);
 

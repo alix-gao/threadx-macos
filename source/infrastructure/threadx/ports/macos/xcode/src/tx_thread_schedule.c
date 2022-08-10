@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #include "tx_api.h"
 #include "tx_thread.h"
@@ -56,18 +57,16 @@
 /**************************************************************************/
 VOID _tx_thread_schedule(VOID)
 {
-    bool wait;
-
-    wait = true;
-    while (true == wait) {
+    while (true) {
         info("_tx_thread_schedule\n");
 
+        /* ensure once schedule */
+        while (!sem_trywait(_tx_schedule_semaphore)) {}
         tx_macos_sem_wait(_tx_schedule_semaphore);
 
         tx_macos_mutex_lock(_tx_macos_mutex);
 
-        if ((NULL != _tx_thread_execute_ptr)
-         && (pthread_main_np() || pthread_equal(_tx_thread_execute_ptr->tx_macos_thread_id, pthread_self()))) {
+        if (NULL != _tx_thread_execute_ptr) {
             /* Yes! We have a thread to execute.
             Note that the critical section is already active from the scheduling loop above. */
 
@@ -82,7 +81,7 @@ VOID _tx_thread_schedule(VOID)
             /* Setup time-slice, if present. */
             _tx_timer_time_slice = _tx_thread_current_ptr->tx_thread_time_slice;
 
-            wait = !pthread_equal(_tx_thread_current_ptr->tx_macos_thread_id, pthread_self());
+            _tx_macos_thread_resume(_tx_thread_current_ptr);
         }
 
         /* Unlock macos mutex. */
@@ -96,6 +95,8 @@ void _tx_thread_delete_port_completion(TX_THREAD *thread_ptr, UINT tx_saved_post
     sem_t           *threadrunsemaphore;
     pthread_t       thread_id;
     struct          timespec ts;
+
+    assert(false);
 
     thread_id = thread_ptr->tx_macos_thread_id;
     threadrunsemaphore = thread_ptr->tx_thread_macos_thread_run_semaphore;
@@ -123,6 +124,8 @@ void _tx_thread_reset_port_completion(TX_THREAD *thread_ptr, UINT tx_saved_postu
     sem_t *threadrunsemaphore;
     pthread_t thread_id;
     struct timespec ts;
+
+    assert(false);
 
     thread_id = thread_ptr->tx_macos_thread_id;
     threadrunsemaphore = thread_ptr->tx_thread_macos_thread_run_semaphore;

@@ -76,7 +76,7 @@ UINT _tx_thread_interrupt_control(UINT new_posture)
 
     /* Pickup the current thread pointer. */
     thread_ptr = _tx_thread_current_ptr;
-
+#if 0
     /* Determine if this is a thread and it does not match the current thread pointer. */
     if ((_tx_macos_threadx_thread)
      && ((!thread_ptr) || (!pthread_equal(thread_ptr->tx_macos_thread_id, thread_id)))) {
@@ -88,7 +88,7 @@ UINT _tx_thread_interrupt_control(UINT new_posture)
 
         pthread_exit((void *) &exit_code);
     }
-
+#endif
     /* Determine the current interrupt lockout condition.  */
     if (pic_status) {
         /* Interrupts are enabled. */
