@@ -27,8 +27,6 @@
 #include <stdio.h>
 #include <unistd.h>
 
-extern __thread int _tx_macos_thread_suspended;
-
 /**************************************************************************/
 /*                                                                        */
 /*  FUNCTION                                               RELEASE        */
@@ -67,7 +65,6 @@ void *_tx_macos_thread_entry(void *ptr)
 
     /* Pickup the current thread pointer. */
     thread_ptr =  (TX_THREAD *) ptr;
-    _tx_macos_threadx_thread = 1;
     nice(20);
 
     info("%s %lx entry\n", thread_ptr->tx_thread_name, pthread_self());
@@ -81,8 +78,6 @@ void *_tx_macos_thread_entry(void *ptr)
 
     /* Now suspend the thread initially.
        If the thread has already been scheduled, this will return immediately. */
-    thread_ptr->tx_macos_thread_suspend = 0;
-    _tx_macos_thread_suspended = 0;
     _tx_macos_thread_suspend(thread_ptr);
     info("%s entry go\n", thread_ptr->tx_thread_name);
     /* Call ThreadX thread entry point. */
@@ -115,7 +110,6 @@ VOID _tx_thread_stack_build(TX_THREAD *thread_ptr, VOID (*function_ptr)(VOID))
         while (1) {
         }
     }
-    thread_ptr->tx_macos_thread_suspend = 0;
     info("create id %lx", thread_ptr->tx_macos_thread_id);
 
     /* Otherwise, we have a good thread create. */

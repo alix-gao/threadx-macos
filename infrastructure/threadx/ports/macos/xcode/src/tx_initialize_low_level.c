@@ -27,25 +27,16 @@
 #include <signal.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdbool.h>
 
 #include "tx_api.h"
 
 /* Define various macos objects used by the ThreadX port. */
-
 pthread_mutex_t _tx_macos_mutex;
 sem_t *_tx_schedule_semaphore;
-struct timespec     _tx_macos_time_stamp;
-__thread int        _tx_macos_threadx_thread = 0;
 
-/* Define signals for macos thread. */
-#define SUSPEND_SIG SIGUSR1
-#define RESUME_SIG SIGUSR2
-
-static sigset_t     _tx_macos_thread_wait_mask;
-/* signal cannot pass parameters, so here use __thread to instead of thread info */
-__thread int _tx_macos_thread_suspended = 0;
-static sem_t        *_tx_macos_thread_timer_wait;
-static sem_t        *_tx_macos_thread_other_wait;
+/* trace */
+struct timespec _tx_macos_time_stamp;
 
 /* Define simulated timer interrupt.  This is done inside a thread, which is
    how other interrupts may be defined as well.  See code below for an
@@ -217,6 +208,16 @@ info(":::::::timer proc end");
     }
 }
 
+/* Define signals for macos thread. */
+#define SUSPEND_SIG SIGUSR1
+#define RESUME_SIG SIGUSR2
+
+static sigset_t _tx_macos_thread_wait_mask;
+
+/* signal cannot pass parameters,
+   use __thread to instead of thread info, bool variable does not need to be protected */
+static __thread bool _tx_macos_thread_suspended = false;
+
 /* Define functions for macos thread. */
 void _tx_macos_thread_resume_handler(int sig)
 {
@@ -227,16 +228,10 @@ void _tx_macos_thread_suspend_handler(int sig)
 {
     (VOID) sig;
 info("suspend handler, %d %lx %lx", pthread_equal(pthread_self(), _tx_macos_timer_id), pthread_self(), _tx_macos_timer_id);
-    if (pthread_equal(pthread_self(), _tx_macos_timer_id)) {
-        tx_macos_sem_post_nolock(_tx_macos_thread_timer_wait);
-    } else {
-        tx_macos_sem_post_nolock(_tx_macos_thread_other_wait);
-    }
 
-info("===================suspend handler");
-    _tx_macos_thread_suspended = 1;
+    _tx_macos_thread_suspended = true;
     sigsuspend(&_tx_macos_thread_wait_mask);
-    _tx_macos_thread_suspended = 0;
+    _tx_macos_thread_suspended = false;
 }
 
 void _tx_macos_thread_suspend(TX_THREAD *thread)
@@ -248,7 +243,7 @@ void _tx_macos_thread_suspend(TX_THREAD *thread)
         printf("&");
         return;
     }
-    if (0 == thread_id) {dump_callstack();}
+    if (0 == thread_id) { dump_callstack(); }
 
     if (pthread_kill(thread_id, 0)) {
         printf("%p-%s\n",thread_id, thread->tx_thread_name);info("thread not exist");
@@ -261,8 +256,7 @@ void _tx_macos_thread_suspend(TX_THREAD *thread)
         return;
     }
 info("suspend %d %lx", pthread_equal(thread_id, _tx_macos_timer_id), thread_id);
-    thread->tx_macos_thread_suspend = 1;
-    /* Send signal. */info("suspend kill");
+    /* Send signal. */
     pthread_kill(thread_id, SUSPEND_SIG);
     info("suspend killed");
 }
@@ -275,18 +269,11 @@ info("resume %lx", thread->tx_macos_thread_id);
     tx_macos_mutex_lock(_tx_macos_mutex);
     pthread_kill(thread->tx_macos_thread_id, RESUME_SIG);
     tx_macos_mutex_unlock(_tx_macos_mutex);
-    thread->tx_macos_thread_suspend = 0;
 }
 
 void _tx_macos_thread_init(void)
 {
     struct sigaction sa;
-
-    /* Create semaphore for macos thread. */
-    sem_unlink("_tx_macos_thread_timer_wait");
-    sem_unlink("_tx_macos_thread_other_wait");
-    _tx_macos_thread_timer_wait = sem_open("_tx_macos_thread_timer_wait", O_CREAT, 0666, 0);
-    _tx_macos_thread_other_wait = sem_open("_tx_macos_thread_other_wait", O_CREAT, 0666, 0);
 
     sigfillset(&_tx_macos_thread_wait_mask);
     sigdelset(&_tx_macos_thread_wait_mask, RESUME_SIG);

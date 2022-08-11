@@ -84,8 +84,7 @@ VOID _tx_thread_system_return(VOID)
     temp_thread_ptr = _tx_thread_current_ptr;
 
     /* Determine if this is a thread (0) and it does not match the current thread pointer. */
-    if ((_tx_macos_threadx_thread) &&
-        ((!temp_thread_ptr) || (!pthread_equal(temp_thread_ptr->tx_macos_thread_id, thread_id)))) {
+    if ((!temp_thread_ptr) || (!pthread_equal(temp_thread_ptr->tx_macos_thread_id, thread_id))) {
         /* This indicates the macos thread was actually terminated by ThreadX is only being allowed to run in order to cleanup its resources. */
         tx_macos_mutex_recursive_unlock(_tx_macos_mutex);
         printf("pthread exit %p\n", temp_thread_ptr);

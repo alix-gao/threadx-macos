@@ -76,19 +76,7 @@ UINT _tx_thread_interrupt_control(UINT new_posture)
 
     /* Pickup the current thread pointer. */
     thread_ptr = _tx_thread_current_ptr;
-#if 0
-    /* Determine if this is a thread and it does not match the current thread pointer. */
-    if ((_tx_macos_threadx_thread)
-     && ((!thread_ptr) || (!pthread_equal(thread_ptr->tx_macos_thread_id, thread_id)))) {
-        printf("pthread exit %p\n", thread_ptr);
-        dump_callstack();
-        /* This indicates the macos thread was actually terminated by ThreadX is only being allowed to run in order to cleanup its resources. */
-        /* Unlock macos mutex. */
-        tx_macos_mutex_recursive_unlock(_tx_macos_mutex);
 
-        pthread_exit((void *) &exit_code);
-    }
-#endif
     /* Determine the current interrupt lockout condition.  */
     if (pic_status) {
         /* Interrupts are enabled. */

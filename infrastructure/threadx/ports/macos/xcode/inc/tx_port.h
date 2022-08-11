@@ -380,7 +380,7 @@ void    _tx_initialize_start_interrupts(void);
                                                                             UINT        tx_thread_macos_suspension_type; \
                                                                             UINT        tx_thread_macos_int_disabled_flag;
 
-#define TX_THREAD_EXTENSION_1                                               UINT       tx_macos_thread_suspend;
+#define TX_THREAD_EXTENSION_1
 #define TX_THREAD_EXTENSION_2
 #define TX_THREAD_EXTENSION_3
 
@@ -529,8 +529,6 @@ extern CHAR _tx_version_id[];
 /* Define externals for the macos port of ThreadX.  */
 extern pthread_mutex_t _tx_macos_mutex;
 extern sem_t *_tx_schedule_semaphore;
-extern struct timespec                          _tx_macos_time_stamp;
-extern __thread int                             _tx_macos_threadx_thread;
 
 /* Define functions for macos thread. */
 void    _tx_macos_thread_suspend(struct TX_THREAD_STRUCT *thread);
