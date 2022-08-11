@@ -42,7 +42,8 @@ __thread int        _tx_macos_threadx_thread = 0;
 #define RESUME_SIG SIGUSR2
 
 static sigset_t     _tx_macos_thread_wait_mask;
-static __thread int _tx_macos_thread_suspended = 0;
+/* signal cannot pass parameters, so here use __thread to instead of thread info */
+__thread int _tx_macos_thread_suspended = 0;
 static sem_t        *_tx_macos_thread_timer_wait;
 static sem_t        *_tx_macos_thread_other_wait;
 
@@ -243,7 +244,7 @@ void _tx_macos_thread_suspend(TX_THREAD *thread)
     sigset_t set;
     pthread_t thread_id = thread->tx_macos_thread_id;
 
-    if (thread->tx_macos_thread_suspend) {
+    if (_tx_macos_thread_suspended) {
         printf("&");
         return;
     }
