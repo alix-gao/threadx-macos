@@ -374,11 +374,10 @@ void    _tx_initialize_start_interrupts(void);
 /* Define the TX_THREAD control block extensions for this port. The main reason
    for the multiple macros is so that backward compatibility can be maintained with
    existing ThreadX kernel awareness modules.  */
-
-#define TX_THREAD_EXTENSION_0                                               pthread_t   tx_macos_thread_id; \
-                                                                            sem_t       *tx_thread_macos_thread_run_semaphore; \
-                                                                            UINT        tx_thread_macos_suspension_type; \
-                                                                            UINT        tx_thread_macos_int_disabled_flag;
+#define TX_THREAD_EXTENSION_0   pthread_t tx_macos_thread_id; \
+                                sem_t       *tx_thread_macos_thread_run_semaphore; \
+                                UINT        tx_thread_macos_suspension_type; \
+                                UINT tx_macos_thread_int_flag;
 
 #define TX_THREAD_EXTENSION_1
 #define TX_THREAD_EXTENSION_2
@@ -528,12 +527,13 @@ extern CHAR _tx_version_id[];
 
 /* Define externals for the macos port of ThreadX.  */
 extern pthread_mutex_t _tx_macos_mutex;
-extern sem_t *_tx_schedule_semaphore;
+extern pthread_cond_t _tx_macos_schedule_cond;
 
 /* Define functions for macos thread. */
 void    _tx_macos_thread_suspend(struct TX_THREAD_STRUCT *thread);
 void    _tx_macos_thread_resume(struct TX_THREAD_STRUCT *thread);
 void    _tx_macos_thread_init();
+UINT current_interrupt_status(void);
 
 #ifndef TX_MACOS_MEMORY_SIZE
 #define TX_MACOS_MEMORY_SIZE                    64000

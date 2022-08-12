@@ -60,13 +60,12 @@ VOID _tx_thread_schedule(VOID)
     while (true) {
         info("_tx_thread_schedule\n");
 
-        /* ensure once schedule */
-        while (!sem_trywait(_tx_schedule_semaphore)) {}
-        tx_macos_sem_wait(_tx_schedule_semaphore);
-
         tx_macos_mutex_lock(_tx_macos_mutex);
 
-        if (NULL != _tx_thread_execute_ptr) {
+        pthread_cond_wait(&_tx_macos_schedule_cond, &_tx_macos_mutex);
+
+        if ((TX_INT_ENABLE == current_interrupt_status())
+         && (NULL != _tx_thread_execute_ptr)) {
             /* Yes! We have a thread to execute.
             Note that the critical section is already active from the scheduling loop above. */
 

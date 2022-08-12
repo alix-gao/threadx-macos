@@ -60,57 +60,42 @@ VOID _tx_thread_interrupt_restore(UINT previous_posture)
     previous_posture = _tx_thread_interrupt_control(previous_posture);
 }
 
+/* idle task interrupt flags */
+static int _main_pic_status = TX_INT_ENABLE;
+
 UINT _tx_thread_interrupt_control(UINT new_posture)
 {
-    static int pic_status = 0; // default status of pic is disable
     UINT old_posture;
-    TX_THREAD *thread_ptr;
-    pthread_t thread_id;
-    int exit_code = 0;
 
     /* Lock macos mutex. */
     tx_macos_mutex_lock(_tx_macos_mutex);
 
-    /* Pickup the id of the current thread. */
-    thread_id = pthread_self();
-
-    /* Pickup the current thread pointer. */
-    thread_ptr = _tx_thread_current_ptr;
-
-    /* Determine the current interrupt lockout condition.  */
-    if (pic_status) {
-        /* Interrupts are enabled. */
-        old_posture = TX_INT_ENABLE;
+    if (NULL == _tx_thread_current_ptr) {
+        old_posture = _main_pic_status;
+        _main_pic_status = new_posture;
     } else {
-        /* Interrupts are disabled. */
-        old_posture = TX_INT_DISABLE;
-    }
-
-    /* First, determine if this call is from a non-thread. */
-    if (_tx_thread_system_state) {
-        /* Determine how to apply the new posture. */
-        if (new_posture == TX_INT_ENABLE) {
-            pic_status++;
-        } else if (new_posture == TX_INT_DISABLE) {
-            pic_status--;
-        }
-    } else if (thread_ptr) {
-        /* Determine how to apply the new posture. */
-        if (new_posture == TX_INT_ENABLE) {
-            pic_status++;
-
-            /* Clear the disabled flag. */
-            _tx_thread_current_ptr->tx_thread_macos_int_disabled_flag = TX_FALSE;
-        } else if (new_posture == TX_INT_DISABLE) {
-            pic_status--;
-
-            /* Set the disabled flag. */
-            _tx_thread_current_ptr->tx_thread_macos_int_disabled_flag = TX_TRUE;
-        }
+        old_posture = _tx_thread_current_ptr->tx_macos_thread_int_flag;
+        _tx_thread_current_ptr->tx_macos_thread_int_flag = new_posture;
     }
 
     tx_macos_mutex_unlock(_tx_macos_mutex);
 
     /* Return the previous interrupt disable posture. */
     return (old_posture);
+}
+
+/* current thread interrupt status */
+UINT current_interrupt_status(void)
+{
+    UINT posture;
+
+    /* Lock macos mutex. */
+    tx_macos_mutex_lock(_tx_macos_mutex);
+    if (NULL == _tx_thread_current_ptr) {
+        posture = _main_pic_status;
+    } else {
+        posture = _tx_thread_current_ptr->tx_macos_thread_int_flag;
+    }
+    tx_macos_mutex_unlock(_tx_macos_mutex);
+    return posture;
 }

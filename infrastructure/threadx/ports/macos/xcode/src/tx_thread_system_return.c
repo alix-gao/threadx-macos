@@ -113,11 +113,12 @@ VOID _tx_thread_system_return(VOID)
     /* Set the current thread pointer to NULL. */
     _tx_thread_current_ptr = TX_NULL;
 
+    //_tx_thread_schedule();
+    pthread_cond_signal(&_tx_macos_schedule_cond);
+
     /* Unlock macos mutex. */
     tx_macos_mutex_recursive_unlock(_tx_macos_mutex);
 
-    //_tx_thread_schedule();
-    tx_macos_sem_post(_tx_schedule_semaphore);
     _tx_macos_thread_suspend(temp_thread_ptr);
     info("wait for %s end", temp_thread_ptr->tx_thread_name);
 }

@@ -34,6 +34,7 @@
 /* Define various macos objects used by the ThreadX port. */
 pthread_mutex_t _tx_macos_mutex;
 sem_t *_tx_schedule_semaphore;
+pthread_cond_t _tx_macos_schedule_cond;
 
 /* trace */
 struct timespec _tx_macos_time_stamp;
@@ -43,7 +44,7 @@ struct timespec _tx_macos_time_stamp;
    example.  */
 
 pthread_t           _tx_macos_timer_id;
-pthread_cond_t _tx_macos_timer_cond;
+static pthread_cond_t _tx_macos_timer_cond;
 pthread_mutex_t _tx_macos_timer_mutex;
 sem_t               *_tx_macos_isr_semaphore;
 void               *_tx_macos_timer_interrupt(void *p);
@@ -107,8 +108,7 @@ VOID _tx_initialize_low_level(VOID)
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
     pthread_mutex_init(&_tx_macos_mutex, &attr);
-    sem_unlink("_tx_schedule_semaphore");
-    _tx_schedule_semaphore = sem_open("_tx_schedule_semaphore", O_CREAT, 0666, 0);
+    pthread_cond_init(&_tx_macos_schedule_cond, NULL);
 
     /* Create semaphore for timer thread. */
     pthread_mutex_init(&_tx_macos_timer_mutex, NULL);
@@ -196,7 +196,7 @@ info(":::::time end....333..");
 info(":::::::timer proc start");
         /* Call the ThreadX system timer interrupt processing. */
         _tx_timer_interrupt();
-        tx_macos_sem_post_nolock(_tx_schedule_semaphore);
+        pthread_cond_signal(&_tx_macos_schedule_cond);
 
 info(":::::::timer proc end");
         /* Call trace ISR exit event insert. */
@@ -240,7 +240,7 @@ void _tx_macos_thread_suspend(TX_THREAD *thread)
     pthread_t thread_id = thread->tx_macos_thread_id;
 
     if (_tx_macos_thread_suspended) {
-        printf("&");
+        info("curr thread is suspended");
         return;
     }
     if (0 == thread_id) { dump_callstack(); }
