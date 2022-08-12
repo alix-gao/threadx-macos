@@ -61,10 +61,10 @@
 /**************************************************************************/
 void *_tx_macos_thread_entry(void *ptr)
 {
-    TX_THREAD  *thread_ptr;
+    TX_THREAD *thread_ptr;
 
     /* Pickup the current thread pointer. */
-    thread_ptr =  (TX_THREAD *) ptr;
+    thread_ptr = (TX_THREAD *) ptr;
     nice(20);
 
     info("%s %lx entry\n", thread_ptr->tx_thread_name, pthread_self());

@@ -57,6 +57,9 @@
 /**************************************************************************/
 VOID _tx_thread_schedule(VOID)
 {
+    TX_INTERRUPT_SAVE_AREA
+    TX_THREAD *thread_ptr;
+
     while (true) {
         info("_tx_thread_schedule\n");
 
@@ -64,13 +67,17 @@ VOID _tx_thread_schedule(VOID)
 
         pthread_cond_wait(&_tx_macos_schedule_cond, &_tx_macos_mutex);
 
+        TX_DISABLE
+        thread_ptr = _tx_thread_execute_ptr;
+        TX_RESTORE
+
         if ((TX_INT_ENABLE == current_interrupt_status())
-         && (NULL != _tx_thread_execute_ptr)) {
+         && (NULL != thread_ptr)) {
             /* Yes! We have a thread to execute.
             Note that the critical section is already active from the scheduling loop above. */
 
             /* Setup the current thread pointer. */
-            _tx_thread_current_ptr = _tx_thread_execute_ptr;
+            _tx_thread_current_ptr = thread_ptr;
 
             info("schedule result %s\n", _tx_thread_current_ptr->tx_thread_name);
 
