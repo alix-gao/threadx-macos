@@ -52,7 +52,7 @@ UINT _tx_thread_interrupt_disable(void)
     UINT previous_value;
 
     previous_value = _tx_thread_interrupt_control(TX_INT_DISABLE);
-    return (previous_value);
+    return previous_value;
 }
 
 VOID _tx_thread_interrupt_restore(UINT previous_posture)
@@ -69,7 +69,6 @@ UINT _tx_thread_interrupt_control(UINT new_posture)
 
     /* Lock macos mutex. */
     tx_macos_mutex_lock(_tx_macos_mutex);
-
     if (NULL == _tx_thread_current_ptr) {
         old_posture = _main_pic_status;
         _main_pic_status = new_posture;
@@ -77,11 +76,10 @@ UINT _tx_thread_interrupt_control(UINT new_posture)
         old_posture = _tx_thread_current_ptr->tx_macos_thread_int_flag;
         _tx_thread_current_ptr->tx_macos_thread_int_flag = new_posture;
     }
-
     tx_macos_mutex_unlock(_tx_macos_mutex);
 
     /* Return the previous interrupt disable posture. */
-    return (old_posture);
+    return old_posture;
 }
 
 /* current thread interrupt status */

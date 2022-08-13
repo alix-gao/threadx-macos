@@ -102,8 +102,7 @@ VOID _tx_thread_stack_build(TX_THREAD *thread_ptr, VOID (*function_ptr)(VOID))
     if (SEM_FAILED == thread_ptr->tx_thread_macos_thread_run_semaphore) {
         /* Display an error message. */
         info("ThreadX macos error creating thread running semaphore! %s, \n", thread_ptr->tx_thread_name);
-        while (1) {
-        }
+        dead();
     }
 
     /* Setup the thread suspension type to solicited thread suspension.
@@ -114,8 +113,7 @@ VOID _tx_thread_stack_build(TX_THREAD *thread_ptr, VOID (*function_ptr)(VOID))
     if (pthread_create(&thread_ptr->tx_macos_thread_id, NULL, _tx_macos_thread_entry, thread_ptr)) {
         /* Display an error message. */
         info("ThreadX macos error creating thread!\n");
-        while (1) {
-        }
+        dead();
     }
     info("create id %lx", thread_ptr->tx_macos_thread_id);
 

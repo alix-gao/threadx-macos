@@ -28,6 +28,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdbool.h>
+#include <assert.h>
+#include <sys/time.h>
 
 #include "tx_api.h"
 
@@ -43,19 +45,14 @@ struct timespec _tx_macos_time_stamp;
    how other interrupts may be defined as well.  See code below for an
    example.  */
 
-pthread_t           _tx_macos_timer_id;
+static pthread_t _tx_macos_timer_id;
 static pthread_cond_t _tx_macos_timer_cond;
-pthread_mutex_t _tx_macos_timer_mutex;
-sem_t               *_tx_macos_isr_semaphore;
-void               *_tx_macos_timer_interrupt(void *p);
-
-/* Define the ThreadX timer interrupt handler. */
-void _tx_timer_interrupt(void);
+static pthread_mutex_t _tx_macos_timer_mutex;
 
 /* Define other external function references. */
-VOID    _tx_thread_context_save(VOID);
-VOID    _tx_thread_context_restore(VOID);
-
+VOID _tx_thread_context_save(VOID);
+VOID _tx_thread_context_restore(VOID);
+VOID _tx_timer_interrupt(VOID);
 VOID _tx_thread_schedule(VOID);
 
 /* Define other external variable references. */
@@ -86,6 +83,85 @@ extern VOID *_tx_initialize_unused_memory;
 /*  08-07-2022        cheng.gao                Initial Version 6.1        */
 /*                                                                        */
 /**************************************************************************/
+
+/* This routine is called after initialization is complete in order to start all interrupt threads.  Interrupt threads in addition to the timer may be added to this routine as well. */
+void _tx_initialize_start_interrupts(void)
+{
+    info("_tx_initialize_start_interrupts");
+
+    /* Kick the timer thread off to generate the ThreadX periodic interrupt source. */
+    pthread_mutex_lock(&_tx_macos_timer_mutex);
+    pthread_cond_signal(&_tx_macos_timer_cond);
+    pthread_mutex_unlock(&_tx_macos_timer_mutex);
+}
+
+/* Define the ThreadX system timer interrupt.
+   Other interrupts may be simulated in a similar way. */
+
+void *_tx_macos_timer_interrupt(void *p)
+{
+    struct timespec ts;
+    long timer_periodic_nsec;
+    int err;
+
+    (void) p;
+    nice(10);
+
+    info("timer interrupt thread\n");
+
+    /* Wait startup semaphore. */
+    pthread_mutex_lock(&_tx_macos_timer_mutex);
+    pthread_cond_wait(&_tx_macos_timer_cond, &_tx_macos_timer_mutex);
+    pthread_mutex_unlock(&_tx_macos_timer_mutex);
+
+    while (1) {
+        static int tick = 0;
+        int result;
+
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_nsec += (1000000000 / TX_TIMER_TICKS_PER_SECOND);
+        if (ts.tv_nsec > 1000000000) {
+            ts.tv_nsec -= 1000000000;
+            ts.tv_sec++;
+        }
+        do {
+            pthread_mutex_lock(&_tx_macos_timer_mutex);
+            errno = 0;
+            result = pthread_cond_timedwait(&_tx_macos_timer_cond, &_tx_macos_timer_mutex, &ts);
+            err = errno;
+            pthread_mutex_unlock(&_tx_macos_timer_mutex);
+            if (0 == result) {
+                break;
+            }
+        } while (result != ETIMEDOUT);
+        info(".......timer interrupt.......%d", tick++);
+
+        if (TX_INT_ENABLE == current_interrupt_status()) {
+            info(".......timer isr.......");
+            tx_macos_mutex_lock(_tx_macos_mutex);
+
+            /* Call ThreadX context save for interrupt preparation. */
+            _tx_thread_context_save();
+
+            /* Call trace ISR enter event insert. */
+            _tx_trace_isr_enter_insert(0);
+
+            /* Call the ThreadX system timer interrupt processing. */
+            _tx_timer_interrupt();
+            pthread_cond_signal(&_tx_macos_schedule_cond);
+            info(".......request schedule.......");
+
+            /* Call trace ISR exit event insert. */
+            _tx_trace_isr_exit_insert(0);
+
+            /* Call ThreadX context restore for interrupt completion. */
+            _tx_thread_context_restore();
+
+            tx_macos_mutex_unlock(_tx_macos_mutex);
+        }
+    }
+}
+
 VOID _tx_initialize_low_level(VOID)
 {
     struct sched_param sp;
@@ -114,16 +190,11 @@ VOID _tx_initialize_low_level(VOID)
     pthread_mutex_init(&_tx_macos_timer_mutex, NULL);
     pthread_cond_init(&_tx_macos_timer_cond, NULL);
 
-    /* Create semaphore for ISR thread. */
-    sem_unlink("_tx_macos_isr_semaphore");
-    _tx_macos_isr_semaphore = sem_open("_tx_macos_isr_semaphore", O_CREAT, 0666, 0);
-
     /* Setup periodic timer interrupt. */
     if (pthread_create(&_tx_macos_timer_id, NULL, _tx_macos_timer_interrupt, NULL)) {
         /* Error creating the timer interrupt. */
         info("ThreadX macos error creating timer interrupt thread!\n");
-        while (1) {
-        }
+        dead();
     }
 
     /* Otherwise, we have a good thread create.
@@ -133,82 +204,6 @@ VOID _tx_initialize_low_level(VOID)
     pthread_setschedparam(_tx_macos_timer_id, SCHED_FIFO, &sp);
 
     /* Done, return to caller. */
-}
-
-/* This routine is called after initialization is complete in order to start all interrupt threads.  Interrupt threads in addition to the timer may be added to this routine as well. */
-void _tx_initialize_start_interrupts(void)
-{
-    /* Kick the timer thread off to generate the ThreadX periodic interrupt source. */
-    pthread_mutex_lock(&_tx_macos_timer_mutex);
-    pthread_cond_signal(&_tx_macos_timer_cond);
-    pthread_mutex_unlock(&_tx_macos_timer_mutex);
-}
-
-/* Define the ThreadX system timer interrupt.
-   Other interrupts may be simulated in a similar way. */
-#include <sys/time.h>
-
-void *_tx_macos_timer_interrupt(void *p)
-{
-    struct timespec ts;
-    long timer_periodic_nsec;
-    int err;
-
-    (VOID) p;
-
-    /* Calculate periodic timer. */
-    timer_periodic_nsec = 1000000000 / TX_TIMER_TICKS_PER_SECOND;
-    nice(10);
-
-    info("timer interrupt thread\n");
-
-    /* Wait startup semaphore. */
-    pthread_mutex_lock(&_tx_macos_timer_mutex);
-    pthread_cond_wait(&_tx_macos_timer_cond, &_tx_macos_timer_mutex);
-    pthread_mutex_unlock(&_tx_macos_timer_mutex);
-
-    while (1) {
-        static int tick = 0;
-        int result;
-info("::::::::timer loop:::::::::: %d", tick++);
-        clock_gettime(CLOCK_REALTIME, &ts);
-        ts.tv_nsec += timer_periodic_nsec;
-        if (ts.tv_nsec > 1000000000) {
-            ts.tv_nsec -= 1000000000;
-            ts.tv_sec++;
-        }
-        do {
-            pthread_mutex_lock(&_tx_macos_timer_mutex);
-            errno = 0;
-            result = pthread_cond_timedwait(&_tx_macos_timer_cond, &_tx_macos_timer_mutex, &ts);
-            err = errno;
-            pthread_mutex_unlock(&_tx_macos_timer_mutex);
-            if (0 == result) {
-                break;
-            }
-        } while (result != ETIMEDOUT);
-info(":::::time end......");
-        if (TX_INT_ENABLE == current_interrupt_status()) {
-            tx_macos_mutex_lock(_tx_macos_mutex);
-            /* Call ThreadX context save for interrupt preparation. */
-            _tx_thread_context_save();
-    info(":::::time end....333..");
-            /* Call trace ISR enter event insert. */
-            _tx_trace_isr_enter_insert(0);
-    info(":::::::timer proc start");
-            /* Call the ThreadX system timer interrupt processing. */
-            _tx_timer_interrupt();
-            pthread_cond_signal(&_tx_macos_schedule_cond);
-
-    info(":::::::timer proc end");
-            /* Call trace ISR exit event insert. */
-            _tx_trace_isr_exit_insert(0);
-
-            /* Call ThreadX context restore for interrupt completion. */
-            _tx_thread_context_restore();
-            tx_macos_mutex_unlock(_tx_macos_mutex);
-        }
-    }
 }
 
 /* Define signals for macos thread. */
@@ -224,13 +219,14 @@ static __thread bool _tx_macos_thread_suspended = false;
 /* Define functions for macos thread. */
 void _tx_macos_thread_resume_handler(int sig)
 {
-    (VOID) sig;
+    (void) sig;
 }
 
 void _tx_macos_thread_suspend_handler(int sig)
 {
-    (VOID) sig;
-info("suspend handler, %d %lx %lx", pthread_equal(pthread_self(), _tx_macos_timer_id), pthread_self(), _tx_macos_timer_id);
+    (void) sig;
+
+    info("suspend handler %lx", pthread_self());
 
     _tx_macos_thread_suspended = true;
     sigsuspend(&_tx_macos_thread_wait_mask);
@@ -242,33 +238,42 @@ void _tx_macos_thread_suspend(TX_THREAD *thread)
     sigset_t set;
     pthread_t thread_id = thread->tx_macos_thread_id;
 
+    assert(NULL != thread);
+
     if (_tx_macos_thread_suspended) {
-        info("curr thread is suspended");
+        info("curr thread has been suspended");
         return;
     }
-    if (0 == thread_id) { dump_callstack(); }
+
+    if (0 == thread_id) {
+        dump_callstack();
+    }
 
     if (pthread_kill(thread_id, 0)) {
-        printf("%p-%s\n",thread_id, thread->tx_thread_name);info("thread not exist");
+        info("thread %lx %s not exist", thread_id, thread->tx_thread_name);
         return;
     }
 
     sigpending(&set);
     if (sigismember(&set, SUSPEND_SIG)) {
-        info("thread is pending");
+        info("thread %s has been suspend already", thread->tx_thread_name);
         return;
     }
-info("suspend %d %lx", pthread_equal(thread_id, _tx_macos_timer_id), thread_id);
+
+    info("suspend %lx %s", thread->tx_macos_thread_id, thread->tx_thread_name);
+
     /* Send signal. */
     //tx_macos_mutex_lock(_tx_macos_mutex);
     pthread_kill(thread_id, SUSPEND_SIG);
     //tx_macos_mutex_unlock(_tx_macos_mutex);
-    info("suspend killed");
+    info("suspend signal issued");
 }
 
 void _tx_macos_thread_resume(TX_THREAD *thread)
 {
-info("resume %lx", thread->tx_macos_thread_id);
+    assert(NULL != thread);
+
+    info("resume %lx %s", thread->tx_macos_thread_id, thread->tx_thread_name);
 
     /* Send signal. */
     //tx_macos_mutex_lock(_tx_macos_mutex);

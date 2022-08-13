@@ -72,9 +72,6 @@ VOID _tx_thread_schedule(VOID)
         TX_RESTORE
 
         if (NULL != thread_ptr) {
-            /* Yes! We have a thread to execute.
-            Note that the critical section is already active from the scheduling loop above. */
-
             /* Setup the current thread pointer. */
             _tx_thread_current_ptr = thread_ptr;
 
@@ -100,12 +97,12 @@ VOID _tx_thread_schedule(VOID)
 
 void _tx_thread_delete_port_completion(TX_THREAD *thread_ptr, UINT tx_saved_posture)
 {
-    INT             macos_status;
-    sem_t           *threadrunsemaphore;
-    pthread_t       thread_id;
-    struct          timespec ts;
+    INT macos_status;
+    sem_t *threadrunsemaphore;
+    pthread_t thread_id;
+    struct timespec ts;
 
-    assert(false);
+    info("_tx_thread_delete_port_completion");
 
     thread_id = thread_ptr->tx_macos_thread_id;
     threadrunsemaphore = thread_ptr->tx_thread_macos_thread_run_semaphore;
@@ -134,7 +131,7 @@ void _tx_thread_reset_port_completion(TX_THREAD *thread_ptr, UINT tx_saved_postu
     pthread_t thread_id;
     struct timespec ts;
 
-    assert(false);
+    info("_tx_thread_reset_port_completion");
 
     thread_id = thread_ptr->tx_macos_thread_id;
     threadrunsemaphore = thread_ptr->tx_thread_macos_thread_run_semaphore;

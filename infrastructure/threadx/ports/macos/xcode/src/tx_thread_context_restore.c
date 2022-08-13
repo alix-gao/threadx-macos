@@ -26,9 +26,6 @@
 #include "tx_thread.h"
 #include "tx_timer.h"
 
-extern sem_t *_tx_macos_isr_semaphore;
-UINT _tx_macos_timer_waiting = 0;
-
 /**************************************************************************/
 /*                                                                        */
 /*  FUNCTION                                               RELEASE        */
@@ -62,7 +59,7 @@ VOID _tx_thread_context_restore(VOID)
     if ((!--_tx_thread_system_state) && (_tx_thread_current_ptr)) {
         /* Interrupts are nested. */
         /* Just recover the saved registers and return to the point of interrupt. */
-        info("interrupt are nested");
+        info("interrupt nested");
         if ((_tx_thread_current_ptr == _tx_thread_execute_ptr)
          || (_tx_thread_preempt_disable)) {
             /* Determine if a thread was interrupted and no preemption is required. */

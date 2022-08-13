@@ -19,9 +19,7 @@
 /**************************************************************************/
 /**************************************************************************/
 
-
 #define TX_SOURCE_CODE
-
 
 /* Include necessary system files. */
 #include "tx_api.h"
@@ -60,7 +58,8 @@ VOID _tx_thread_context_save(VOID)
     /* If an application thread is running, suspend it to simulate preemption. */
     if ((_tx_thread_system_state == 0)
      && (_tx_thread_current_ptr) && (_tx_thread_current_ptr->tx_thread_init_done)) {
-        info("-------------save %s %d", _tx_thread_current_ptr->tx_thread_name, _tx_thread_system_state);
+        info("_tx_thread_context_save %s", _tx_thread_current_ptr->tx_thread_name);
+
         /* Yes, this is the first interrupt and an application thread is running..., suspend it! */
         _tx_macos_thread_suspend(_tx_thread_current_ptr);
     }

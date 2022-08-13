@@ -351,11 +351,9 @@ ULONG   _tx_misra_time_stamp_get(VOID);
 #endif
 
 
-/* Define the macos-specific initialization code that is expanded in the generic source.  */
-
-void    _tx_initialize_start_interrupts(void);
-
-#define TX_PORT_SPECIFIC_PRE_SCHEDULER_INITIALIZATION                       _tx_initialize_start_interrupts();
+/* Define the macos-specific initialization code that is expanded in the generic source. */
+void _tx_initialize_start_interrupts(void);
+#define TX_PORT_SPECIFIC_PRE_SCHEDULER_INITIALIZATION _tx_initialize_start_interrupts();
 
 
 /* Determine whether or not stack checking is enabled. By default, ThreadX stack checking is
@@ -508,14 +506,12 @@ VOID   _tx_thread_interrupt_restore(UINT previous_posture);
 
 
 /* Define the interrupt lockout macros for each ThreadX object.  */
-
 #define TX_BLOCK_POOL_DISABLE               TX_DISABLE
 #define TX_BYTE_POOL_DISABLE                TX_DISABLE
 #define TX_EVENT_FLAGS_GROUP_DISABLE        TX_DISABLE
 #define TX_MUTEX_DISABLE                    TX_DISABLE
 #define TX_QUEUE_DISABLE                    TX_DISABLE
 #define TX_SEMAPHORE_DISABLE                TX_DISABLE
-
 
 /* Define the version ID of ThreadX.  This may be utilized by the application.  */
 #ifdef TX_THREAD_INIT
@@ -524,25 +520,26 @@ CHAR _tx_version_id[] = "Copyright (c) Microsoft Corporation * ThreadX macos/xco
 extern CHAR _tx_version_id[];
 #endif
 
-
 /* Define externals for the macos port of ThreadX.  */
 extern pthread_mutex_t _tx_macos_mutex;
 extern pthread_cond_t _tx_macos_schedule_cond;
 
 /* Define functions for macos thread. */
-void    _tx_macos_thread_suspend(struct TX_THREAD_STRUCT *thread);
-void    _tx_macos_thread_resume(struct TX_THREAD_STRUCT *thread);
-void    _tx_macos_thread_init();
+void _tx_macos_thread_suspend(struct TX_THREAD_STRUCT *thread);
+void _tx_macos_thread_resume(struct TX_THREAD_STRUCT *thread);
+void _tx_macos_thread_init();
 UINT current_interrupt_status(void);
 
 #ifndef TX_MACOS_MEMORY_SIZE
-#define TX_MACOS_MEMORY_SIZE                    64000
+#define TX_MACOS_MEMORY_SIZE 64000
 #endif
 
 /* Define priorities of pthreads. */
-#define TX_MACOS_PRIORITY_SCHEDULE    (3)
-#define TX_MACOS_PRIORITY_ISR         (2)
-#define TX_MACOS_PRIORITY_USER_THREAD (1)
+#define TX_MACOS_PRIORITY_SCHEDULE 3
+#define TX_MACOS_PRIORITY_ISR 2
+#define TX_MACOS_PRIORITY_USER_THREAD 1
+
+#define dead() do {} while (1)
 
 #include <stdio.h>
 #include <pthread.h>
