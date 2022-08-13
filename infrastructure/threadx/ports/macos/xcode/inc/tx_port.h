@@ -376,7 +376,7 @@ void    _tx_initialize_start_interrupts(void);
    existing ThreadX kernel awareness modules.  */
 #define TX_THREAD_EXTENSION_0   pthread_t tx_macos_thread_id; \
                                 sem_t       *tx_thread_macos_thread_run_semaphore; \
-                                UINT        tx_thread_macos_suspension_type; \
+                                UINT tx_thread_init_done; \
                                 UINT tx_macos_thread_int_flag;
 
 #define TX_THREAD_EXTENSION_1

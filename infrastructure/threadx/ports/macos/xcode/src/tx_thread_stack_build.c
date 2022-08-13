@@ -79,6 +79,9 @@ void *_tx_macos_thread_entry(void *ptr)
     /* Now suspend the thread initially.
        If the thread has already been scheduled, this will return immediately. */
     _tx_macos_thread_suspend(thread_ptr);
+    /* Setup the thread suspension type to solicited thread suspension.
+       Pseudo interrupt handlers will suspend with this field set to 1. */
+    thread_ptr->tx_thread_init_done = 1;
     info("%s entry go\n", thread_ptr->tx_thread_name);
     /* Call ThreadX thread entry point. */
     _tx_thread_shell_entry();
@@ -103,6 +106,10 @@ VOID _tx_thread_stack_build(TX_THREAD *thread_ptr, VOID (*function_ptr)(VOID))
         }
     }
 
+    /* Setup the thread suspension type to solicited thread suspension.
+       Pseudo interrupt handlers will suspend with this field set to 1. */
+    thread_ptr->tx_thread_init_done = 0;
+
     /* Create a macos thread for the application thread. */
     if (pthread_create(&thread_ptr->tx_macos_thread_id, NULL, _tx_macos_thread_entry, thread_ptr)) {
         /* Display an error message. */
@@ -115,10 +122,6 @@ VOID _tx_thread_stack_build(TX_THREAD *thread_ptr, VOID (*function_ptr)(VOID))
     /* Otherwise, we have a good thread create. */
     sp.sched_priority = TX_MACOS_PRIORITY_USER_THREAD;
     pthread_setschedparam(thread_ptr->tx_macos_thread_id, SCHED_FIFO, &sp);
-
-    /* Setup the thread suspension type to solicited thread suspension.
-       Pseudo interrupt handlers will suspend with this field set to 1. */
-    thread_ptr->tx_thread_macos_suspension_type = 0;
 
     /* Clear the disabled count that will keep track of the tx_interrupt_control nesting. */
     thread_ptr->tx_macos_thread_int_flag = TX_INT_ENABLE;

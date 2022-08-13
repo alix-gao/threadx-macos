@@ -107,9 +107,6 @@ VOID _tx_thread_system_return(VOID)
     /* Pickup the current thread state. */
     temp_thread_state = temp_thread_ptr->tx_thread_state;
 
-    /* Setup the suspension type for this thread. */
-    temp_thread_ptr->tx_thread_macos_suspension_type = 0;
-
     /* Set the current thread pointer to NULL. */
     _tx_thread_current_ptr = TX_NULL;
 

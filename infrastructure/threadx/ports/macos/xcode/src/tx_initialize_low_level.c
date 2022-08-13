@@ -127,7 +127,8 @@ VOID _tx_initialize_low_level(VOID)
     }
 
     /* Otherwise, we have a good thread create.
-       Now set the priority to a level lower than the system thread but higher than the application threads. */
+       Now set the priority to a level lower than the system thread but higher than the application threads.
+       Processes scheduled under one of the real-time policies (SCHED_FIFO, SCHED_RR) have a sched_priority value in the range 1 (low) to 99 (high). */
     sp.sched_priority = TX_MACOS_PRIORITY_ISR;
     pthread_setschedparam(_tx_macos_timer_id, SCHED_FIFO, &sp);
 
@@ -259,7 +260,9 @@ void _tx_macos_thread_suspend(TX_THREAD *thread)
     }
 info("suspend %d %lx", pthread_equal(thread_id, _tx_macos_timer_id), thread_id);
     /* Send signal. */
+    //tx_macos_mutex_lock(_tx_macos_mutex);
     pthread_kill(thread_id, SUSPEND_SIG);
+    //tx_macos_mutex_unlock(_tx_macos_mutex);
     info("suspend killed");
 }
 
@@ -268,9 +271,9 @@ void _tx_macos_thread_resume(TX_THREAD *thread)
 info("resume %lx", thread->tx_macos_thread_id);
 
     /* Send signal. */
-    tx_macos_mutex_lock(_tx_macos_mutex);
+    //tx_macos_mutex_lock(_tx_macos_mutex);
     pthread_kill(thread->tx_macos_thread_id, RESUME_SIG);
-    tx_macos_mutex_unlock(_tx_macos_mutex);
+    //tx_macos_mutex_unlock(_tx_macos_mutex);
 }
 
 void _tx_macos_thread_init(void)

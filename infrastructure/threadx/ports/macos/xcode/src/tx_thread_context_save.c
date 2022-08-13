@@ -58,13 +58,11 @@ VOID _tx_thread_context_save(VOID)
     tx_macos_mutex_lock(_tx_macos_mutex);
 
     /* If an application thread is running, suspend it to simulate preemption. */
-    if ((_tx_thread_current_ptr) && (_tx_thread_system_state == 0)) {
+    if ((_tx_thread_system_state == 0)
+     && (_tx_thread_current_ptr) && (_tx_thread_current_ptr->tx_thread_init_done)) {
         info("-------------save %s %d", _tx_thread_current_ptr->tx_thread_name, _tx_thread_system_state);
         /* Yes, this is the first interrupt and an application thread is running..., suspend it! */
         _tx_macos_thread_suspend(_tx_thread_current_ptr);
-
-        /* Indicate that this thread was suspended asynchronously. */
-        _tx_thread_current_ptr->tx_thread_macos_suspension_type = 1;
     }
 
     /* Increment the nested interrupt condition. */
