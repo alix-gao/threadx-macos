@@ -71,8 +71,7 @@ VOID _tx_thread_schedule(VOID)
         thread_ptr = _tx_thread_execute_ptr;
         TX_RESTORE
 
-        if ((TX_INT_ENABLE == current_interrupt_status())
-         && (NULL != thread_ptr)) {
+        if (NULL != thread_ptr) {
             /* Yes! We have a thread to execute.
             Note that the critical section is already active from the scheduling loop above. */
 

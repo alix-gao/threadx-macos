@@ -187,24 +187,26 @@ info("::::::::timer loop:::::::::: %d", tick++);
             }
         } while (result != ETIMEDOUT);
 info(":::::time end......");
-        tx_macos_mutex_lock(_tx_macos_mutex);
-        /* Call ThreadX context save for interrupt preparation. */
-        _tx_thread_context_save();
-info(":::::time end....333..");
-        /* Call trace ISR enter event insert. */
-        _tx_trace_isr_enter_insert(0);
-info(":::::::timer proc start");
-        /* Call the ThreadX system timer interrupt processing. */
-        _tx_timer_interrupt();
-        pthread_cond_signal(&_tx_macos_schedule_cond);
+        if (TX_INT_ENABLE == current_interrupt_status()) {
+            tx_macos_mutex_lock(_tx_macos_mutex);
+            /* Call ThreadX context save for interrupt preparation. */
+            _tx_thread_context_save();
+    info(":::::time end....333..");
+            /* Call trace ISR enter event insert. */
+            _tx_trace_isr_enter_insert(0);
+    info(":::::::timer proc start");
+            /* Call the ThreadX system timer interrupt processing. */
+            _tx_timer_interrupt();
+            pthread_cond_signal(&_tx_macos_schedule_cond);
 
-info(":::::::timer proc end");
-        /* Call trace ISR exit event insert. */
-        _tx_trace_isr_exit_insert(0);
+    info(":::::::timer proc end");
+            /* Call trace ISR exit event insert. */
+            _tx_trace_isr_exit_insert(0);
 
-        /* Call ThreadX context restore for interrupt completion. */
-        _tx_thread_context_restore();
-        tx_macos_mutex_unlock(_tx_macos_mutex);
+            /* Call ThreadX context restore for interrupt completion. */
+            _tx_thread_context_restore();
+            tx_macos_mutex_unlock(_tx_macos_mutex);
+        }
     }
 }
 

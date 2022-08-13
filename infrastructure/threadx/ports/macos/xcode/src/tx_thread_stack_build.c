@@ -121,7 +121,7 @@ VOID _tx_thread_stack_build(TX_THREAD *thread_ptr, VOID (*function_ptr)(VOID))
     thread_ptr->tx_thread_macos_suspension_type = 0;
 
     /* Clear the disabled count that will keep track of the tx_interrupt_control nesting. */
-    thread_ptr->tx_macos_thread_int_flag = TX_INT_DISABLE;
+    thread_ptr->tx_macos_thread_int_flag = TX_INT_ENABLE;
 
     /* Setup a fake thread stack pointer. */
     thread_ptr->tx_thread_stack_ptr = (VOID *)(((CHAR *) thread_ptr->tx_thread_stack_end) - 8);
