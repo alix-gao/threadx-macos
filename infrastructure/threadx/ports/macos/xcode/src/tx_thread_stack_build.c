@@ -22,10 +22,11 @@
 #define TX_SOURCE_CODE
 
 /* Include necessary system files. */
-#include "tx_api.h"
-#include "tx_thread.h"
 #include <stdio.h>
 #include <unistd.h>
+#include <assert.h>
+#include "tx_api.h"
+#include "tx_thread.h"
 
 /**************************************************************************/
 /*                                                                        */
@@ -63,6 +64,8 @@ void *_tx_macos_thread_entry(void *ptr)
 {
     TX_THREAD *thread_ptr;
 
+    assert(NULL != ptr);
+
     /* Pickup the current thread pointer. */
     thread_ptr = (TX_THREAD *) ptr;
     nice(20);
@@ -93,7 +96,7 @@ VOID _tx_thread_stack_build(TX_THREAD *thread_ptr, VOID (*function_ptr)(VOID))
 {
     struct sched_param sp;
 
-    (VOID) function_ptr;
+    assert(NULL != function_ptr);
 
     /* Create the run semaphore for the thread.
        This will allow the scheduler control over when the thread actually runs. */

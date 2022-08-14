@@ -83,7 +83,7 @@ UINT _tx_thread_interrupt_control(UINT new_posture)
 }
 
 /* current thread interrupt status */
-UINT current_interrupt_status(void)
+UINT _tx_current_interrupt_status(void)
 {
     UINT posture;
 
