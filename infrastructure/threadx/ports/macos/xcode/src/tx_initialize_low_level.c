@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <assert.h>
+#include <fcntl.h>
 #include <sys/time.h>
 
 #include "tx_api.h"
@@ -89,20 +90,21 @@ static sigset_t _tx_macos_thread_wait_mask;
 static __thread bool _tx_macos_thread_suspended = false;
 
 /* Define functions for macos thread. */
-void _tx_macos_thread_resume_handler(int sig)
+static void _tx_macos_thread_resume_handler(int sig)
 {
     (void) sig;
 }
 
-void _tx_macos_thread_suspend_handler(int sig)
+static void _tx_macos_thread_suspend_handler(int sig)
 {
     (void) sig;
 
-    info("suspend handler %lx", pthread_self());
-
-    _tx_macos_thread_suspended = true;
-    sigsuspend(&_tx_macos_thread_wait_mask);
-    _tx_macos_thread_suspended = false;
+    if (!_tx_macos_thread_suspended) {
+        _tx_macos_thread_suspended = true;
+        info("suspend handler %lx", pthread_self());
+        sigsuspend(&_tx_macos_thread_wait_mask);
+        _tx_macos_thread_suspended = false;
+    }
 }
 
 void _tx_macos_thread_suspend(TX_THREAD *thread)
@@ -153,7 +155,7 @@ void _tx_macos_thread_resume(TX_THREAD *thread)
     //tx_macos_mutex_unlock(_tx_macos_mutex);
 }
 
-void _tx_macos_thread_init(void)
+static void _tx_macos_thread_init(void)
 {
     struct sigaction sa;
 
@@ -183,7 +185,7 @@ void _tx_initialize_start_interrupts(void)
 /* Define the ThreadX system timer interrupt.
    Other interrupts may be simulated in a similar way. */
 
-void *_tx_macos_timer_interrupt(void *p)
+static void *_tx_macos_timer_interrupt(void *p)
 {
     struct timespec ts;
     long timer_periodic_nsec;
@@ -221,6 +223,7 @@ void *_tx_macos_timer_interrupt(void *p)
         } while (result != ETIMEDOUT);
         info(".......timer interrupt.......%d", tick++);
 
+        /* discard one tick */
         if (TX_INT_ENABLE == _tx_current_interrupt_status()) {
             info(".......timer isr.......");
             tx_macos_mutex_lock(_tx_macos_mutex);

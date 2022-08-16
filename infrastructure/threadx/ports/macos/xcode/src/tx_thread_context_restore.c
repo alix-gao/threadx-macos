@@ -70,7 +70,7 @@ VOID _tx_thread_context_restore(VOID)
             /* Recover the saved context and return to the point of interrupt. */
             //_tx_macos_thread_resume(_tx_thread_current_ptr);
         } else {
-            _tx_macos_thread_suspend(_tx_thread_current_ptr);
+            //_tx_macos_thread_suspend(_tx_thread_current_ptr);
 
             /* Save the remaining time-slice and disable it. */
             if (_tx_timer_time_slice) {

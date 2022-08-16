@@ -83,15 +83,11 @@ VOID _tx_thread_schedule(VOID)
             /* Setup time-slice, if present. */
             _tx_timer_time_slice = _tx_thread_current_ptr->tx_thread_time_slice;
 
-            //_tx_macos_thread_resume(_tx_thread_current_ptr);
+            _tx_macos_thread_resume(_tx_thread_current_ptr);
         }
 
         /* Unlock macos mutex. */
         tx_macos_mutex_unlock(_tx_macos_mutex);
-
-        if (thread_ptr) {
-            _tx_macos_thread_resume(thread_ptr);
-        }
     }
 }
 

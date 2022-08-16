@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <assert.h>
+#include <fcntl.h>
+
 #include "tx_api.h"
 #include "tx_thread.h"
 
@@ -44,15 +46,6 @@
 /*    The stack frame results in a fake interrupt return to the supplied  */
 /*    function pointer.                                                   */
 /*                                                                        */
-/*  INPUT                                                                 */
-/*                                                                        */
-/*    thread_ptr                            Pointer to thread control blk */
-/*    function_ptr                          Pointer to return function    */
-/*                                                                        */
-/*  OUTPUT                                                                */
-/*                                                                        */
-/*    None                                                                */
-/*                                                                        */
 /*  RELEASE HISTORY                                                       */
 /*                                                                        */
 /*    DATE              NAME                      DESCRIPTION             */
@@ -60,7 +53,7 @@
 /*  08-07-2022        cheng.gao                Initial Version 6.1        */
 /*                                                                        */
 /**************************************************************************/
-void *_tx_macos_thread_entry(void *ptr)
+static void *_tx_macos_thread_entry(void *ptr)
 {
     TX_THREAD *thread_ptr;
 
@@ -70,7 +63,7 @@ void *_tx_macos_thread_entry(void *ptr)
     thread_ptr = (TX_THREAD *) ptr;
     nice(20);
 
-    info("%s %lx entry\n", thread_ptr->tx_thread_name, pthread_self());
+    info("%s %x entry\n", thread_ptr->tx_thread_name, pthread_self());
 
     /* thread entry may start before pthread_create is returned.
        so thread id maybe 0, here wait for thread id */

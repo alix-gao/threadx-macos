@@ -475,7 +475,7 @@ VOID _tx_timer_interrupt(VOID);
         pthread_mutex_unlock(&_tx_macos_mutex); \
     } while (0)
 
-#if 0
+#if 1
 #define info(fmt, arg...) \
     do { \
         uint64_t _tid; \
